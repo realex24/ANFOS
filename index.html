@@ -22,32 +22,462 @@ input[type=range]{accent-color:#3B6FFF}
 <body>
 <div id="root"></div>
 <script type="text/babel" data-presets="react">
-const{useState,useEffect,useRef,useCallback}=React;
-const{AreaChart,Area,BarChart,Bar,ComposedChart,Line,XAxis,YAxis,CartesianGrid,Tooltip,ResponsiveContainer}=Recharts;
-const T={bg:'#070C18',bgCard:'#0C1628',border:'#162238',borderMed:'#1E3050',blue:'#3B6FFF',blueGlow:'rgba(59,111,255,0.15)',cyan:'#00C8F0',green:'#00C67B',amber:'#FFB020',red:'#FF4D6A',textPrimary:'#C8D8FF',textSec:'#5A7AB0',textMuted:'#2E4A72'};
-const ROLE_CONFIG={ceo:{label:'CEO / Founder',cards:['runway','burn','arr','anomaly']},cfo:{label:'CFO / Controller',cards:['runway','variance','close','tax']},ops:{label:'Operations Mgr',cards:['ap','ar','anomaly','close']}};
-const CARDS={runway:{title:'Cash Runway',value:'7.2 mo',sub:'↓ from 8.1 mo last week',color:'amber',alert:'Runway drops to 5.8mo in 45 days if Q3 hiring proceeds.',action:'Run Scenario',view:'forecast'},burn:{title:'Monthly Burn',value:'$43.5K',sub:'+5.2% MoM',color:'red',alert:'Burn rate trending up 3 consecutive months.',action:'View Details',view:null},arr:{title:'ARR',value:'$1.05M',sub:'+18.3% YoY',color:'green',alert:'3 enterprise deals could add $280K ARR.',action:'View Pipeline',view:null},anomaly:{title:'Anomaly Flagged',value:'1 Alert',sub:'New vendor, no PO',color:'red',alert:'CloudOps Partners: $14,200 — no PO on file. Match: 43%.',action:'Investigate',view:'apar'},variance:{title:'Budget Variance',value:'−$28K',sub:'Engineering over 31%',color:'amber',alert:'Engineering $28K over budget. Primary driver: cloud infra.',action:'View Breakdown',view:null},close:{title:'Month-End Close',value:'94%',sub:'3 items remaining',color:'cyan',alert:'Remaining: Prepaid amortization, 2 intercompany eliminations.',action:'View Checklist',view:null},ap:{title:'AP Outstanding',value:'$122.9K',sub:'Due next 14 days',color:'amber',alert:'$14.2K flagged for manual review (new vendor).',action:'Review AP',view:'apar'},ar:{title:'AR at Risk',value:'$80.3K',sub:'2 invoices 30+ days',color:'red',alert:'Acme Corp $48.2K (14d) and Beta Systems $32.1K (31d).',action:'Send Reminders',view:'apar'},tax:{title:'Tax Nexus Alert',value:'Texas',sub:'74% of $100K threshold',color:'amber',alert:'Estimated nexus breach in 38 days. Register now.',action:'Set Up Filing',view:'agents'}};
-const INVOICES=[{id:'INV-2847',vendor:'Acme Corp',amount:48200,due:'14 days overdue',status:'overdue',match:97,type:'ar'},{id:'INV-2831',vendor:'Beta Systems LLC',amount:32100,due:'31 days overdue',status:'overdue',match:91,type:'ar'},{id:'INV-2819',vendor:'Stripe Inc.',amount:12800,due:'Due in 3 days',status:'pending',match:99,type:'ap'},{id:'INV-2815',vendor:'AWS / Amazon',amount:8420,due:'Due in 7 days',status:'matched',match:100,type:'ap'},{id:'INV-2808',vendor:'CloudOps Partners',amount:14200,due:'Due today',status:'flagged',match:43,type:'ap'},{id:'INV-2803',vendor:'Gusto Payroll',amount:87500,due:'Scheduled',status:'scheduled',match:100,type:'ap'}];
-const AGENTS=[{id:'ap',name:'AP Agent',status:'active',tasks:14,conf:97,auto:2,recent:'Matched INV-2815 (AWS) at 100% confidence. Payment scheduled May 1.'},{id:'ar',name:'AR Agent',status:'active',tasks:8,conf:89,auto:2,recent:'Sent dunning email to Acme Corp (INV-2847, 14 days overdue).'},{id:'recon',name:'Reconciliation',status:'active',tasks:312,conf:99,auto:3,recent:'312 transactions matched today. Month-end close: 94%.'},{id:'forecast',name:'Forecasting',status:'processing',tasks:3,conf:82,auto:2,recent:'Recalculating 13-week cash flow. New payroll data ingested.'},{id:'tax',name:'Tax & Compliance',status:'alert',tasks:2,conf:95,auto:1,recent:'ALERT: Texas nexus at 74% of $100K threshold. Breach in ~38 days.'}];
-const CASH_DATA=[{m:'Oct',cash:1240,fc:1240},{m:'Nov',cash:1198,fc:1198},{m:'Dec',cash:1142,fc:1142},{m:'Jan',cash:1082,fc:1082},{m:'Feb',cash:1035,fc:1035},{m:'Mar',cash:986,fc:986},{m:'Apr',cash:921,fc:921},{m:'May',cash:null,fc:867},{m:'Jun',cash:null,fc:798},{m:'Jul',cash:null,fc:722},{m:'Aug',cash:null,fc:638},{m:'Sep',cash:null,fc:545}];
-const BURN_DATA=[{m:'Oct',burn:38.2},{m:'Nov',burn:39.8},{m:'Dec',burn:42.1},{m:'Jan',burn:44.3},{m:'Feb',burn:43.8},{m:'Mar',burn:45.2}];
-const STATUS_META={overdue:{color:'#FF4D6A',label:'Overdue'},pending:{color:'#FFB020',label:'Pending'},matched:{color:'#00C67B',label:'Matched'},flagged:{color:'#FF4D6A',label:'⚠ Flagged'},scheduled:{color:'#00C8F0',label:'Scheduled'}};
+const { useState, useEffect, useRef, useCallback } = React;
+const { AreaChart, Area, BarChart, Bar, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
+
+const T = {
+  bg:'#070C18',bgCard:'#0C1628',border:'#162238',borderMed:'#1E3050',
+  blue:'#3B6FFF',blueGlow:'rgba(59,111,255,0.15)',cyan:'#00C8F0',
+  green:'#00C67B',amber:'#FFB020',red:'#FF4D6A',
+  textPrimary:'#C8D8FF',textSec:'#5A7AB0',textMuted:'#2E4A72',
+};
+
+const ROLE_CONFIG = {
+  ceo:{label:'CEO / Founder',cards:['runway','burn','arr','anomaly']},
+  cfo:{label:'CFO / Controller',cards:['runway','variance','close','tax']},
+  ops:{label:'Operations Mgr',cards:['ap','ar','anomaly','close']},
+};
+
+const CARDS = {
+  runway:{title:'Cash Runway',value:'7.2 mo',sub:'↓ from 8.1 mo last week',color:'amber',alert:'Runway drops to 5.8mo in 45 days if Q3 hiring proceeds.',action:'Run Scenario',view:'forecast'},
+  burn:{title:'Monthly Burn',value:'$43.5K',sub:'+5.2% MoM',color:'red',alert:'Burn rate trending up 3 consecutive months.',action:'View Details',view:null},
+  arr:{title:'ARR',value:'$1.05M',sub:'+18.3% YoY',color:'green',alert:'3 enterprise deals could add $280K ARR.',action:'View Pipeline',view:null},
+  anomaly:{title:'Anomaly Flagged',value:'1 Alert',sub:'New vendor, no PO',color:'red',alert:'CloudOps Partners: $14,200 — no PO on file. Match: 43%.',action:'Investigate',view:'apar'},
+  variance:{title:'Budget Variance',value:'−$28K',sub:'Engineering over 31%',color:'amber',alert:'Engineering $28K over budget. Primary driver: cloud infra.',action:'View Breakdown',view:null},
+  close:{title:'Month-End Close',value:'94%',sub:'3 items remaining',color:'cyan',alert:'Remaining: Prepaid amortization, 2 intercompany eliminations.',action:'View Checklist',view:null},
+  ap:{title:'AP Outstanding',value:'$122.9K',sub:'Due next 14 days',color:'amber',alert:'$14.2K flagged for manual review (new vendor).',action:'Review AP',view:'apar'},
+  ar:{title:'AR at Risk',value:'$80.3K',sub:'2 invoices 30+ days',color:'red',alert:'Acme Corp $48.2K (14d) and Beta Systems $32.1K (31d).',action:'Send Reminders',view:'apar'},
+  tax:{title:'Tax Nexus Alert',value:'Texas',sub:'74% of $100K threshold',color:'amber',alert:'Estimated nexus breach in 38 days. Register now.',action:'Set Up Filing',view:'agents'},
+};
+
+const INVOICES = [
+  {id:'INV-2847',vendor:'Acme Corp',amount:48200,due:'14 days overdue',status:'overdue',match:97,type:'ar'},
+  {id:'INV-2831',vendor:'Beta Systems LLC',amount:32100,due:'31 days overdue',status:'overdue',match:91,type:'ar'},
+  {id:'INV-2819',vendor:'Stripe Inc.',amount:12800,due:'Due in 3 days',status:'pending',match:99,type:'ap'},
+  {id:'INV-2815',vendor:'AWS / Amazon',amount:8420,due:'Due in 7 days',status:'matched',match:100,type:'ap'},
+  {id:'INV-2808',vendor:'CloudOps Partners',amount:14200,due:'Due today',status:'flagged',match:43,type:'ap'},
+  {id:'INV-2803',vendor:'Gusto Payroll',amount:87500,due:'Scheduled',status:'scheduled',match:100,type:'ap'},
+];
+
+const AGENTS = [
+  {id:'ap',name:'AP Agent',status:'active',tasks:14,conf:97,auto:2,recent:'Matched INV-2815 (AWS) at 100% confidence. Payment scheduled May 1.'},
+  {id:'ar',name:'AR Agent',status:'active',tasks:8,conf:89,auto:2,recent:'Sent dunning email to Acme Corp (INV-2847, 14 days overdue). Next: escalation script.'},
+  {id:'recon',name:'Reconciliation',status:'active',tasks:312,conf:99,auto:3,recent:'312 transactions matched today. 2 anomalies flagged. Month-end close: 94%.'},
+  {id:'forecast',name:'Forecasting',status:'processing',tasks:3,conf:82,auto:2,recent:'Recalculating 13-week cash flow. New payroll data ingested from Gusto.'},
+  {id:'tax',name:'Tax & Compliance',status:'alert',tasks:2,conf:95,auto:1,recent:'ALERT: Texas economic nexus at 74% of $100K threshold. Breach in ~38 days.'},
+];
+
+const CASH_DATA = [
+  {m:'Oct',cash:1240,fc:1240},{m:'Nov',cash:1198,fc:1198},{m:'Dec',cash:1142,fc:1142},
+  {m:'Jan',cash:1082,fc:1082},{m:'Feb',cash:1035,fc:1035},{m:'Mar',cash:986,fc:986},
+  {m:'Apr',cash:921,fc:921},{m:'May',cash:null,fc:867},{m:'Jun',cash:null,fc:798},
+  {m:'Jul',cash:null,fc:722},{m:'Aug',cash:null,fc:638},{m:'Sep',cash:null,fc:545},
+];
+
+const BURN_DATA = [
+  {m:'Oct',burn:38.2},{m:'Nov',burn:39.8},{m:'Dec',burn:42.1},
+  {m:'Jan',burn:44.3},{m:'Feb',burn:43.8},{m:'Mar',burn:45.2},
+];
+
+const STATUS_META = {
+  overdue:{color:T.red,label:'Overdue'},pending:{color:T.amber,label:'Pending'},
+  matched:{color:T.green,label:'Matched'},flagged:{color:T.red,label:'⚠ Flagged'},scheduled:{color:T.cyan,label:'Scheduled'},
+};
 const AUTO_LABELS=['—','Assisted','Semi-Auto','Fully Auto'];
 const AUTO_COLORS=[T.textMuted,T.blue,T.cyan,T.green];
-const SYS=`You are ANFOS, an AI Financial Operating System for a Series A startup. Cash $921K, Burn $43.5K/mo, Runway 7.2 months, ARR $1.05M. AR overdue $80.3K. AP queue $122.9K. Texas nexus 74% threshold. R&D credit $96.4K projected. Engineering variance -$28K. Be a direct CFO advisor, under 200 words.`;
-const Chip=({color,children})=><span style={{background:color+'22',color,border:`1px solid ${color}44`,borderRadius:4,padding:'2px 8px',fontSize:11,fontWeight:500,letterSpacing:'.04em',display:'inline-block'}}>{children}</span>;
-const Dot=({color,pulse})=><span style={{position:'relative',display:'inline-flex',width:8,height:8}}>{pulse&&<span style={{position:'absolute',width:8,height:8,borderRadius:'50%',background:color,opacity:.4,animation:'ping 1.5s ease-in-out infinite'}}/>}<span style={{position:'relative',width:8,height:8,borderRadius:'50%',background:color}}/></span>;
-const ConfBar=({value,color})=><div style={{display:'flex',alignItems:'center',gap:8}}><div style={{flex:1,height:4,background:T.border,borderRadius:2,overflow:'hidden'}}><div style={{width:`${value}%`,height:'100%',background:color,borderRadius:2}}/></div><span style={{fontSize:11,color:T.textSec,minWidth:34,fontFamily:"'JetBrains Mono',monospace"}}>{value}%</span></div>;
-const Tip=({active,payload,label})=>{if(!active||!payload?.length)return null;return<div style={{background:T.bgCard,border:`1px solid ${T.borderMed}`,borderRadius:8,padding:'10px 14px'}}><div style={{fontSize:12,color:T.textSec,marginBottom:6}}>{label}</div>{payload.map((p,i)=><div key={i} style={{fontSize:13,color:p.color||T.textPrimary,fontFamily:"'JetBrains Mono',monospace"}}>{p.name}: ${p.value?.toFixed(0)}K</div>)}</div>};
-const NAV=[{id:'dashboard',label:'Dashboard',icon:'▦'},{id:'chat',label:'AI Assistant',icon:'💬'},{id:'apar',label:'AP / AR',icon:'📄'},{id:'forecast',label:'Forecasting',icon:'📊'},{id:'agents',label:'Agent Control',icon:'🤖',badge:'1'}];
-function Sidebar({view,setView}){return<nav style={{width:200,background:T.bgCard,borderRight:`1px solid ${T.border}`,display:'flex',flexDirection:'column',height:'100vh',position:'sticky',top:0,flexShrink:0}}><div style={{padding:'18px 16px 14px',borderBottom:`1px solid ${T.border}`}}><div style={{display:'flex',alignItems:'center',gap:10}}><div style={{width:32,height:32,borderRadius:8,background:T.blue,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>⚡</div><div><div style={{fontSize:14,fontWeight:600,color:T.textPrimary}}>ANFOS</div><div style={{fontSize:9,color:T.textSec,letterSpacing:'.1em'}}>FINANCIAL OS</div></div></div></div><div style={{padding:'10px 8px',flex:1}}>{NAV.map(({id,label,icon,badge})=>{const active=view===id;return<button key={id} onClick={()=>setView(id)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',marginBottom:2,borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:active?T.blueGlow:'transparent',color:active?T.blue:T.textSec,fontSize:13,fontWeight:active?500:400,transition:'all .15s'}}><span style={{fontSize:14}}>{icon}</span>{label}{badge&&<span style={{marginLeft:'auto',background:'#FF4D6A33',color:'#FF4D6A',borderRadius:10,padding:'1px 6px',fontSize:10,fontWeight:600}}>{badge}</span>}</button>})}</div><div style={{padding:14,borderTop:`1px solid ${T.border}`}}><div style={{display:'flex',alignItems:'center',gap:10}}><div style={{width:30,height:30,borderRadius:'50%',background:T.blue+'33',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,color:T.blue,flexShrink:0}}>JD</div><div><div style={{fontSize:12,fontWeight:500,color:T.textPrimary}}>Jordan Davis</div><div style={{fontSize:10,color:T.textSec}}>Series A · 7.2mo runway</div></div></div></div></nav>}
-function InsightCard({cardKey,onAction}){const c=CARDS[cardKey];if(!c)return null;const cm={amber:T.amber,red:T.red,green:T.green,cyan:T.cyan};const color=cm[c.color];return<div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:18,display:'flex',flexDirection:'column',gap:10}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}><span style={{fontSize:11,color:T.textSec,letterSpacing:'.03em'}}>{c.title}</span><Chip color={color}>{c.color==='green'?'GROWING':c.color==='red'?'↑ RISK':'ALERT'}</Chip></div><div style={{fontSize:24,fontWeight:600,color:T.textPrimary,fontFamily:"'JetBrains Mono',monospace",letterSpacing:'-.02em'}}>{c.value}</div><div style={{fontSize:12,color:T.textSec}}>{c.sub}</div><div style={{borderTop:`1px solid ${T.border}`,paddingTop:10,fontSize:12,color:T.textSec,lineHeight:1.5}}>{c.alert}</div><button onClick={()=>c.view&&onAction(c.view)} style={{alignSelf:'flex-start',background:color+'18',color,border:`1px solid ${color}44`,borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>{c.action} →</button></div>}
-function Dashboard({role,setRole,setView}){const cards=ROLE_CONFIG[role]?.cards||ROLE_CONFIG.ceo.cards;return<div style={{padding:26,minHeight:'100vh',animation:'fadein .2s ease'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:22}}><div><div style={{fontSize:20,fontWeight:600,color:T.textPrimary,letterSpacing:'-.02em'}}>Financial Overview</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>April 17, 2026 · Live · Synced 2 min ago</div></div><div style={{display:'flex',gap:2,background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:8,padding:3}}>{Object.entries(ROLE_CONFIG).map(([k,v])=><button key={k} onClick={()=>setRole(k)} style={{padding:'6px 12px',borderRadius:6,border:'none',cursor:'pointer',fontFamily:'inherit',background:role===k?T.blue:'transparent',color:role===k?'#fff':T.textSec,fontSize:12,fontWeight:role===k?500:400,transition:'all .15s'}}>{v.label.split(' / ')[0]}</button>)}</div></div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:18}}>{cards.map(k=><InsightCard key={k} cardKey={k} onAction={setView}/>)}</div><div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:14}}><div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:20}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}><div><div style={{fontSize:13,fontWeight:500,color:T.textPrimary}}>Cash Position & Runway Forecast</div><div style={{fontSize:11,color:T.textSec,marginTop:2}}>Actual (solid) + AI forecast (dashed)</div></div><Chip color={T.amber}>7.2 months</Chip></div><ResponsiveContainer width="100%" height={190}><ComposedChart data={CASH_DATA} margin={{top:5,right:5,bottom:0,left:0}}><CartesianGrid stroke={T.border} strokeDasharray="3 3" vertical={false}/><XAxis dataKey="m" tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`$${v}K`} width={50}/><Tooltip content={<Tip/>}/><Area type="monotone" dataKey="cash" stroke={T.blue} strokeWidth={2} fill={T.blue+'18'} dot={false} name="Actual Cash" connectNulls={false}/><Line type="monotone" dataKey="fc" stroke={T.cyan} strokeWidth={1.5} strokeDasharray="5 4" dot={false} name="AI Forecast" connectNulls/></ComposedChart></ResponsiveContainer></div><div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:20}}><div style={{fontSize:13,fontWeight:500,color:T.textPrimary,marginBottom:4}}>Monthly Burn Rate</div><div style={{fontSize:11,color:T.textSec,marginBottom:14}}>6-month trend</div><ResponsiveContainer width="100%" height={190}><BarChart data={BURN_DATA} margin={{top:5,right:0,bottom:0,left:0}}><CartesianGrid stroke={T.border} strokeDasharray="3 3" vertical={false}/><XAxis dataKey="m" tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`$${v}K`} width={40}/><Tooltip content={({active,payload,label})=>active&&payload?.length?<div style={{background:T.bgCard,border:`1px solid ${T.borderMed}`,borderRadius:8,padding:'8px 12px'}}><div style={{fontSize:12,color:T.textSec}}>{label}</div><div style={{fontSize:13,color:T.amber,fontFamily:"'JetBrains Mono',monospace"}}>${payload[0].value}K</div></div>:null}/><Bar dataKey="burn" fill={T.amber+'70'} stroke={T.amber} strokeWidth={1} radius={[3,3,0,0]} name="Burn"/></BarChart></ResponsiveContainer></div></div></div>}
-function ChatView(){const[msgs,setMsgs]=useState([{role:'assistant',content:"Hello! I'm your ANFOS AI Financial Assistant. Ask me anything about your finances."}]);const[input,setInput]=useState('');const[loading,setLoading]=useState(false);const bottomRef=useRef(null);useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'})},[msgs]);const send=useCallback(async(text)=>{const q=(text||input).trim();if(!q||loading)return;setInput('');const nm=[...msgs,{role:'user',content:q}];setMsgs(nm);setLoading(true);try{const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:SYS,messages:nm.map(m=>({role:m.role,content:m.content}))})});const d=await r.json();setMsgs(p=>[...p,{role:'assistant',content:d.content?.[0]?.text||'Error.'}]);}catch{setMsgs(p=>[...p,{role:'assistant',content:'Connection error.'}]);}setLoading(false);},[input,msgs,loading]);const sugg=["Why did our cash flow drop?","What if we hire 3 engineers?","Show R&D credit status","Which AR invoices are at risk?"];return<div style={{display:'flex',flexDirection:'column',height:'100vh',animation:'fadein .2s ease'}}><div style={{padding:'18px 24px',borderBottom:`1px solid ${T.border}`,display:'flex',alignItems:'center',gap:12,flexShrink:0}}><div style={{width:36,height:36,borderRadius:10,background:T.blue+'33',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>🧠</div><div><div style={{fontSize:14,fontWeight:500,color:T.textPrimary}}>ANFOS AI Financial Assistant</div><div style={{fontSize:11,color:T.textSec}}>● Live data · Claude-powered</div></div></div><div style={{flex:1,overflowY:'auto',padding:'18px 24px',display:'flex',flexDirection:'column',gap:14}}>{msgs.length===1&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>{sugg.map(s=><button key={s} onClick={()=>send(s)} style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:10,padding:'11px 13px',color:T.textSec,fontSize:12,textAlign:'left',cursor:'pointer',fontFamily:'inherit',lineHeight:1.4}}>"{s}"</button>)}</div>}{msgs.map((m,i)=><div key={i} style={{display:'flex',gap:10,alignItems:'flex-start',flexDirection:m.role==='user'?'row-reverse':'row'}}><div style={{width:30,height:30,borderRadius:'50%',background:m.role==='user'?T.blue+'33':T.bgCard,border:`1px solid ${T.border}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:13}}>{m.role==='user'?'👤':'🧠'}</div><div style={{maxWidth:'72%',background:m.role==='user'?T.blue+'22':T.bgCard,border:`1px solid ${m.role==='user'?T.blue+'44':T.border}`,borderRadius:12,padding:'12px 16px',fontSize:13,color:T.textPrimary,lineHeight:1.6,whiteSpace:'pre-wrap'}}>{m.content}</div></div>)}{loading&&<div style={{display:'flex',gap:10,alignItems:'flex-start'}}><div style={{width:30,height:30,borderRadius:'50%',background:T.bgCard,border:`1px solid ${T.border}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>🧠</div><div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:'14px 16px',display:'flex',gap:4}}>{[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:'50%',background:T.blue,animation:`bounce 1.2s ease-in-out ${i*.15}s infinite`}}/>)}</div></div>}<div ref={bottomRef}/></div><div style={{padding:'14px 24px',borderTop:`1px solid ${T.border}`,flexShrink:0}}><div style={{display:'flex',gap:10,background:T.bgCard,border:`1px solid ${T.borderMed}`,borderRadius:12,padding:'10px 14px'}}><input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask anything about your finances…" style={{flex:1,background:'transparent',border:'none',outline:'none',color:T.textPrimary,fontSize:13,fontFamily:'inherit'}}/><button onClick={()=>send()} style={{background:input.trim()&&!loading?T.blue:T.border,color:input.trim()&&!loading?'#fff':T.textMuted,border:'none',borderRadius:8,width:34,height:34,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,fontSize:14}}>→</button></div></div></div>}
-function APARView(){const[tab,setTab]=useState('all');const filtered=tab==='all'?INVOICES:tab==='flagged'?INVOICES.filter(i=>i.status==='flagged'):INVOICES.filter(i=>i.type===tab);return<div style={{padding:26,animation:'fadein .2s ease'}}><div style={{marginBottom:18}}><div style={{fontSize:20,fontWeight:600,color:T.textPrimary,letterSpacing:'-.02em'}}>AP / AR Management</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>Invoice queue · AI-matched · Human review required for flagged items</div></div><div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:18}}>{[['AP Outstanding','$122.9K','6 invoices',T.amber],['AR Overdue','$80.3K','2 at risk',T.red],['Auto-Match Rate','94.2%','Avg conf 91%',T.green]].map(([l,v,s,c])=><div key={l} style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:10,padding:'14px 16px'}}><div style={{fontSize:11,color:T.textSec}}>{l}</div><div style={{fontSize:22,fontWeight:600,color:c,fontFamily:"'JetBrains Mono',monospace",margin:'6px 0'}}>{v}</div><div style={{fontSize:11,color:T.textSec}}>{s}</div></div>)}</div><div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,overflow:'hidden'}}><div style={{display:'flex',borderBottom:`1px solid ${T.border}`}}>{[['all','All'],['ap','Payable'],['ar','Receivable'],['flagged','Flagged']].map(([k,l])=><button key={k} onClick={()=>setTab(k)} style={{padding:'11px 18px',border:'none',borderBottom:`2px solid ${tab===k?T.blue:'transparent'}`,background:'transparent',color:tab===k?T.blue:T.textSec,fontSize:13,fontWeight:tab===k?500:400,cursor:'pointer',fontFamily:'inherit'}}>{l}</button>)}</div><div style={{display:'grid',gridTemplateColumns:'110px 1fr 90px 130px 140px 120px',padding:'9px 16px',borderBottom:`1px solid ${T.border}`}}>{['Invoice','Vendor','Amount','Status','AI Match','Action'].map(h=><span key={h} style={{fontSize:10,color:T.textMuted,letterSpacing:'.06em',textTransform:'uppercase'}}>{h}</span>)}</div>{filtered.map((inv,i)=>{const s=STATUS_META[inv.status];const mc=inv.match>=90?T.green:inv.match>=70?T.amber:T.red;return<div key={inv.id} style={{display:'grid',gridTemplateColumns:'110px 1fr 90px 130px 140px 120px',padding:'11px 16px',borderBottom:`1px solid ${T.border}`,alignItems:'center',background:i%2===0?'transparent':'rgba(7,12,24,.4)'}}><span style={{fontSize:12,color:T.textPrimary,fontFamily:"'JetBrains Mono',monospace"}}>{inv.id}</span><span style={{fontSize:13,color:T.textPrimary}}>{inv.vendor}</span><span style={{fontSize:13,color:T.textPrimary,fontFamily:"'JetBrains Mono',monospace"}}>${inv.amount.toLocaleString()}</span><div><Chip color={s.color}>{s.label}</Chip><div style={{fontSize:10,color:T.textSec,marginTop:3}}>{inv.due}</div></div><ConfBar value={inv.match} color={mc}/><div style={{display:'flex',gap:5}}>{inv.status==='flagged'?<><button style={{background:T.green+'22',color:T.green,border:`1px solid ${T.green}44`,borderRadius:5,padding:'4px 8px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>Approve</button><button style={{background:T.red+'22',color:T.red,border:`1px solid ${T.red}44`,borderRadius:5,padding:'4px 8px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>Reject</button></>:<button style={{background:T.blue+'22',color:T.blue,border:`1px solid ${T.blue}44`,borderRadius:5,padding:'4px 8px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>View</button>}</div></div>})}</div></div>}
-function ForecastingView(){const[hires,setHires]=useState(0);const[delayM,setDelayM]=useState(0);const[office,setOffice]=useState(0);const[mkt,setMkt]=useState(0);const base=43.5,hc=hires*14.5,oc=office*8,mk=mkt*5,sv=delayM*hc*.3;const burn=base+hc+oc+mk-sv;const runway=Math.max(0,921/burn);const color=runway>8?T.green:runway>5?T.amber:T.red;const scenData=Array.from({length:13},(_,i)=>({w:`W${i+1}`,base:Math.max(0,921-base*i/4),scenario:Math.max(0,921-burn*i/4)}));const sliders=[{label:'New Engineer Hires',val:hires,set:setHires,max:10,cost:`+$${hc.toFixed(0)}K/mo`},{label:'Hiring Delay (months)',val:delayM,set:setDelayM,max:6,cost:sv>0?`-$${sv.toFixed(0)}K saved`:'No savings'},{label:'Office Expansion',val:office,set:setOffice,max:5,cost:`+$${oc.toFixed(0)}K/mo`},{label:'Marketing Increase',val:mkt,set:setMkt,max:5,cost:`+$${mk.toFixed(0)}K/mo`}];return<div style={{padding:26,animation:'fadein .2s ease'}}><div style={{marginBottom:18}}><div style={{fontSize:20,fontWeight:600,color:T.textPrimary,letterSpacing:'-.02em'}}>Forecasting & Scenario Planning</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>Adjust parameters to model strategic decisions in real time</div></div><div style={{display:'grid',gridTemplateColumns:'1fr 2fr',gap:16}}><div style={{display:'flex',flexDirection:'column',gap:12}}><div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:20}}><div style={{fontSize:13,fontWeight:500,color:T.textPrimary,marginBottom:18}}>⚙ Scenario Controls</div>{sliders.map(s=><div key={s.label} style={{marginBottom:16}}><div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}><span style={{fontSize:12,color:T.textSec}}>{s.label}</span><span style={{fontSize:11,color:s.cost.startsWith('-')?T.green:T.amber,fontFamily:"'JetBrains Mono',monospace"}}>{s.cost}</span></div><div style={{display:'flex',alignItems:'center',gap:10}}><input type="range" min={0} max={s.max} value={s.val} onChange={e=>s.set(+e.target.value)} style={{flex:1}}/><span style={{fontSize:13,color:T.textPrimary,fontFamily:"'JetBrains Mono',monospace",minWidth:20}}>{s.val}</span></div></div>)}</div><div style={{background:T.bgCard,border:`1px solid ${color}44`,borderRadius:12,padding:20}}><div style={{fontSize:11,color:T.textSec,marginBottom:6}}>Projected Runway</div><div style={{fontSize:40,fontWeight:700,color,fontFamily:"'JetBrains Mono',monospace",letterSpacing:'-.02em'}}>{runway.toFixed(1)}<span style={{fontSize:16,fontWeight:400}}> mo</span></div><div style={{fontSize:12,color:T.textSec,marginTop:6}}>New burn: <span style={{color:T.textPrimary,fontFamily:"'JetBrains Mono',monospace"}}>${burn.toFixed(1)}K/mo</span></div><div style={{marginTop:10,padding:10,background:color+'10',borderRadius:8,fontSize:12,color:T.textSec,lineHeight:1.6}}>{runway<6?'⚠ Runway below 6 months. Consider staging hires or a bridge round.':runway<8?'Runway healthy. Monitor AR collections.':'Cash position looks strong.'}</div></div></div><div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:20}}><div style={{fontSize:13,fontWeight:500,color:T.textPrimary,marginBottom:4}}>Cash Runway Comparison</div><div style={{fontSize:11,color:T.textSec,marginBottom:16}}>Base case vs. scenario · 13-week</div><ResponsiveContainer width="100%" height={310}><ComposedChart data={scenData} margin={{top:5,right:5,bottom:0,left:0}}><CartesianGrid stroke={T.border} strokeDasharray="3 3" vertical={false}/><XAxis dataKey="w" tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false}/><YAxis tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`$${v.toFixed(0)}K`} width={55}/><Tooltip content={<Tip/>}/><Area type="monotone" dataKey="base" stroke={T.blue} strokeWidth={2} fill={T.blue+'15'} dot={false} name="Base Case"/><Line type="monotone" dataKey="scenario" stroke={color} strokeWidth={2} strokeDasharray="5 4" dot={false} name="Scenario"/></ComposedChart></ResponsiveContainer><div style={{marginTop:14,padding:12,background:color+'10',border:`1px solid ${color}33`,borderRadius:8}}><div style={{fontSize:11,fontWeight:500,color,marginBottom:4}}>AI Analysis</div><div style={{fontSize:12,color:T.textSec,lineHeight:1.6}}>{burn>base?`Burn increases by $${(burn-base).toFixed(1)}K/mo, reducing runway to ${runway.toFixed(1)} months.`:'Scenario reduces burn — cash position improves.'}{' '}{runway<5?' Seek capital immediately.':runway<7?' Monitor closely.':' Proceed with confidence.'}</div></div></div></div></div>}
-function AgentsView(){const[selected,setSelected]=useState(null);return<div style={{padding:26,animation:'fadein .2s ease'}}><div style={{marginBottom:18}}><div style={{fontSize:20,fontWeight:600,color:T.textPrimary,letterSpacing:'-.02em'}}>Agent Control Center</div><div style={{fontSize:12,color:T.textSec,marginTop:2}}>5 specialized agents · Real-time status · Progressive autonomy</div></div><div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:18}}>{[['Tasks Today','337',T.blue],['Avg Confidence','92.4%',T.green],['HITL Escalations','3',T.amber],['Auto-Executed','312',T.cyan]].map(([l,v,c])=><div key={l} style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><span style={{fontSize:11,color:T.textSec}}>{l}</span><span style={{fontSize:18,fontWeight:600,color:c,fontFamily:"'JetBrains Mono',monospace"}}>{v}</span></div>)}</div><div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>{AGENTS.map(ag=>{const sc=ag.status==='active'?T.green:ag.status==='alert'?T.red:T.amber;const mc=ag.conf>=90?T.green:ag.conf>=75?T.amber:T.red;const open=selected===ag.id;return<div key={ag.id} onClick={()=>setSelected(open?null:ag.id)} style={{background:T.bgCard,border:`1px solid ${open?T.blue:T.border}`,borderRadius:12,padding:18,cursor:'pointer',transition:'border-color .15s'}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14}}><div style={{display:'flex',alignItems:'center',gap:10}}><div style={{width:36,height:36,borderRadius:10,background:T.blue+'22',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🖥</div><div><div style={{fontSize:14,fontWeight:500,color:T.textPrimary}}>{ag.name}</div><div style={{fontSize:11,color:T.textSec,marginTop:1}}>{ag.tasks} tasks today</div></div></div><div style={{display:'flex',alignItems:'center',gap:5}}><Dot color={sc} pulse={ag.status!=='alert'}/><span style={{fontSize:10,color:sc,fontWeight:500,letterSpacing:'.05em'}}>{ag.status.toUpperCase()}</span></div></div><div style={{marginBottom:12}}><div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:T.textSec,marginBottom:5}}><span>Confidence</span><span style={{fontFamily:"'JetBrains Mono',monospace"}}>{ag.conf}%</span></div><ConfBar value={ag.conf} color={mc}/></div><div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><div style={{fontSize:10,color:T.textMuted,marginBottom:4,letterSpacing:'.06em'}}>AUTONOMY</div><div style={{display:'flex',gap:3,alignItems:'center'}}>{[1,2,3].map(l=><div key={l} style={{width:20,height:4,borderRadius:2,background:l<=ag.auto?AUTO_COLORS[ag.auto]:T.border}}/>)}<span style={{fontSize:10,color:AUTO_COLORS[ag.auto],marginLeft:6,fontWeight:500}}>{AUTO_LABELS[ag.auto]}</span></div></div>{ag.status==='alert'&&<Chip color={T.red}>Action Required</Chip>}</div>{open&&<div style={{marginTop:14,paddingTop:14,borderTop:`1px solid ${T.border}`}}><div style={{fontSize:10,color:T.textMuted,marginBottom:6,letterSpacing:'.06em'}}>LATEST ACTIVITY</div><div style={{fontSize:12,color:T.textSec,lineHeight:1.6}}>{ag.recent}</div></div>}</div>})}</div></div>}
-function App(){const[view,setView]=useState('dashboard');const[role,setRole]=useState('ceo');return<div style={{display:'flex',height:'100vh',overflow:'hidden'}}><Sidebar view={view} setView={setView}/><main style={{flex:1,overflowY:'auto'}}>{view==='dashboard'&&<Dashboard role={role} setRole={setRole} setView={setView}/>}{view==='chat'&&<ChatView/>}{view==='apar'&&<APARView/>}{view==='forecast'&&<ForecastingView/>}{view==='agents'&&<AgentsView/>}</main></div>}
+
+const SYSTEM_PROMPT = `You are ANFOS, an AI Financial Operating System for a Series A startup. Real-time data: Cash $921K, Burn $43.5K/mo, Runway 7.2 months, ARR $1.05M (+18.3% YoY). AR overdue: $80.3K. AP queue: $122.9K next 14 days; CloudOps Partners $14.2K flagged. Tax: Texas nexus 74% threshold. Month-end close: 94%. R&D credit: $482K qualified, ~$96.4K projected. Engineering budget variance: -$28K. Respond like a senior CFO advisor. Be direct and under 200 words.`;
+
+// ── Atoms ─────────────────────────────────────────────────────────────────────
+const Chip = ({color,children}) => (
+  <span style={{background:color+'22',color,border:`1px solid ${color}44`,borderRadius:4,padding:'2px 8px',fontSize:11,fontWeight:500,letterSpacing:'.04em',display:'inline-block'}}>{children}</span>
+);
+const Dot = ({color,pulse}) => (
+  <span style={{position:'relative',display:'inline-flex',width:8,height:8}}>
+    {pulse&&<span style={{position:'absolute',width:8,height:8,borderRadius:'50%',background:color,opacity:.4,animation:'ping 1.5s ease-in-out infinite'}}/>}
+    <span style={{position:'relative',width:8,height:8,borderRadius:'50%',background:color}}/>
+  </span>
+);
+const ConfBar = ({value,color}) => (
+  <div style={{display:'flex',alignItems:'center',gap:8}}>
+    <div style={{flex:1,height:4,background:T.border,borderRadius:2,overflow:'hidden'}}>
+      <div style={{width:`${value}%`,height:'100%',background:color,borderRadius:2}}/>
+    </div>
+    <span style={{fontSize:11,color:T.textSec,minWidth:34,fontFamily:"'JetBrains Mono',monospace"}}>{value}%</span>
+  </div>
+);
+const Tip = ({active,payload,label}) => {
+  if(!active||!payload?.length) return null;
+  return <div style={{background:T.bgCard,border:`1px solid ${T.borderMed}`,borderRadius:8,padding:'10px 14px'}}>
+    <div style={{fontSize:12,color:T.textSec,marginBottom:6}}>{label}</div>
+    {payload.map((p,i)=><div key={i} style={{fontSize:13,color:p.color||T.textPrimary,fontFamily:"'JetBrains Mono',monospace"}}>{p.name}: ${p.value?.toFixed(0)}K</div>)}
+  </div>;
+};
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+const NAV = [
+  {id:'dashboard',label:'Dashboard',icon:'▦'},
+  {id:'chat',label:'AI Assistant',icon:'💬'},
+  {id:'apar',label:'AP / AR',icon:'📄'},
+  {id:'forecast',label:'Forecasting',icon:'📊'},
+  {id:'agents',label:'Agent Control',icon:'🤖',badge:'1'},
+];
+function Sidebar({view,setView}) {
+  return <nav style={{width:200,background:T.bgCard,borderRight:`1px solid ${T.border}`,display:'flex',flexDirection:'column',height:'100vh',position:'sticky',top:0,flexShrink:0}}>
+    <div style={{padding:'18px 16px 14px',borderBottom:`1px solid ${T.border}`}}>
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <div style={{width:32,height:32,borderRadius:8,background:T.blue,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>⚡</div>
+        <div>
+          <div style={{fontSize:14,fontWeight:600,color:T.textPrimary}}>ANFOS</div>
+          <div style={{fontSize:9,color:T.textSec,letterSpacing:'.1em'}}>FINANCIAL OS</div>
+        </div>
+      </div>
+    </div>
+    <div style={{padding:'10px 8px',flex:1}}>
+      {NAV.map(({id,label,icon,badge})=>{
+        const active=view===id;
+        return <button key={id} onClick={()=>setView(id)} style={{width:'100%',display:'flex',alignItems:'center',gap:10,padding:'9px 12px',marginBottom:2,borderRadius:8,border:'none',cursor:'pointer',fontFamily:'inherit',background:active?T.blueGlow:'transparent',color:active?T.blue:T.textSec,fontSize:13,fontWeight:active?500:400,transition:'all .15s'}}>
+          <span style={{fontSize:14}}>{icon}</span>{label}
+          {badge&&<span style={{marginLeft:'auto',background:'#FF4D6A33',color:'#FF4D6A',borderRadius:10,padding:'1px 6px',fontSize:10,fontWeight:600}}>{badge}</span>}
+        </button>;
+      })}
+    </div>
+    <div style={{padding:14,borderTop:`1px solid ${T.border}`}}>
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        <div style={{width:30,height:30,borderRadius:'50%',background:T.blue+'33',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:600,color:T.blue,flexShrink:0}}>JD</div>
+        <div>
+          <div style={{fontSize:12,fontWeight:500,color:T.textPrimary}}>Jordan Davis</div>
+          <div style={{fontSize:10,color:T.textSec}}>Series A · 7.2mo runway</div>
+        </div>
+      </div>
+    </div>
+  </nav>;
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function InsightCard({cardKey,onAction}) {
+  const c=CARDS[cardKey]; if(!c) return null;
+  const colorMap={amber:T.amber,red:T.red,green:T.green,cyan:T.cyan};
+  const color=colorMap[c.color];
+  return <div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:18,display:'flex',flexDirection:'column',gap:10}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+      <span style={{fontSize:11,color:T.textSec,letterSpacing:'.03em'}}>{c.title}</span>
+      <Chip color={color}>{c.color==='green'?'GROWING':c.color==='red'?'↑ RISK':'ALERT'}</Chip>
+    </div>
+    <div style={{fontSize:24,fontWeight:600,color:T.textPrimary,fontFamily:"'JetBrains Mono',monospace",letterSpacing:'-.02em'}}>{c.value}</div>
+    <div style={{fontSize:12,color:T.textSec}}>{c.sub}</div>
+    <div style={{borderTop:`1px solid ${T.border}`,paddingTop:10,fontSize:12,color:T.textSec,lineHeight:1.5}}>{c.alert}</div>
+    <button onClick={()=>c.view&&onAction(c.view)} style={{alignSelf:'flex-start',background:color+'18',color,border:`1px solid ${color}44`,borderRadius:6,padding:'5px 12px',fontSize:12,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>{c.action} →</button>
+  </div>;
+}
+
+function Dashboard({role,setRole,setView}) {
+  const cards=ROLE_CONFIG[role]?.cards||ROLE_CONFIG.ceo.cards;
+  return <div style={{padding:26,minHeight:'100vh',animation:'fadein .2s ease'}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:22}}>
+      <div>
+        <div style={{fontSize:20,fontWeight:600,color:T.textPrimary,letterSpacing:'-.02em'}}>Financial Overview</div>
+        <div style={{fontSize:12,color:T.textSec,marginTop:2}}>April 17, 2026 · Live · Synced 2 min ago</div>
+      </div>
+      <div style={{display:'flex',gap:2,background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:8,padding:3}}>
+        {Object.entries(ROLE_CONFIG).map(([k,v])=>(
+          <button key={k} onClick={()=>setRole(k)} style={{padding:'6px 12px',borderRadius:6,border:'none',cursor:'pointer',fontFamily:'inherit',background:role===k?T.blue:'transparent',color:role===k?'#fff':T.textSec,fontSize:12,fontWeight:role===k?500:400,transition:'all .15s'}}>{v.label.split(' / ')[0]}</button>
+        ))}
+      </div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:18}}>
+      {cards.map(k=><InsightCard key={k} cardKey={k} onAction={setView}/>)}
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:14}}>
+      <div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:20}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+          <div>
+            <div style={{fontSize:13,fontWeight:500,color:T.textPrimary}}>Cash Position & Runway Forecast</div>
+            <div style={{fontSize:11,color:T.textSec,marginTop:2}}>Actual (solid) + AI forecast (dashed)</div>
+          </div>
+          <Chip color={T.amber}>7.2 months</Chip>
+        </div>
+        <ResponsiveContainer width="100%" height={190}>
+          <ComposedChart data={CASH_DATA} margin={{top:5,right:5,bottom:0,left:0}}>
+            <CartesianGrid stroke={T.border} strokeDasharray="3 3" vertical={false}/>
+            <XAxis dataKey="m" tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false}/>
+            <YAxis tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`$${v}K`} width={50}/>
+            <Tooltip content={<Tip/>}/>
+            <Area type="monotone" dataKey="cash" stroke={T.blue} strokeWidth={2} fill={T.blue+'18'} dot={false} name="Actual Cash" connectNulls={false}/>
+            <Line type="monotone" dataKey="fc" stroke={T.cyan} strokeWidth={1.5} strokeDasharray="5 4" dot={false} name="AI Forecast" connectNulls/>
+          </ComposedChart>
+        </ResponsiveContainer>
+        <div style={{display:'flex',gap:16,marginTop:10,fontSize:11}}>
+          <span style={{display:'flex',alignItems:'center',gap:5,color:T.textSec}}><span style={{width:16,height:2,background:T.blue,display:'inline-block',borderRadius:1}}/> Actual</span>
+          <span style={{display:'flex',alignItems:'center',gap:5,color:T.textSec}}><span style={{width:16,height:0,borderTop:`2px dashed ${T.cyan}`,display:'inline-block'}}/> Forecast</span>
+        </div>
+      </div>
+      <div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:20}}>
+        <div style={{fontSize:13,fontWeight:500,color:T.textPrimary,marginBottom:4}}>Monthly Burn Rate</div>
+        <div style={{fontSize:11,color:T.textSec,marginBottom:14}}>6-month trend</div>
+        <ResponsiveContainer width="100%" height={190}>
+          <BarChart data={BURN_DATA} margin={{top:5,right:0,bottom:0,left:0}}>
+            <CartesianGrid stroke={T.border} strokeDasharray="3 3" vertical={false}/>
+            <XAxis dataKey="m" tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false}/>
+            <YAxis tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`$${v}K`} width={40}/>
+            <Tooltip content={({active,payload,label})=>active&&payload?.length?<div style={{background:T.bgCard,border:`1px solid ${T.borderMed}`,borderRadius:8,padding:'8px 12px'}}><div style={{fontSize:12,color:T.textSec}}>{label}</div><div style={{fontSize:13,color:T.amber,fontFamily:"'JetBrains Mono',monospace"}}>${payload[0].value}K</div></div>:null}/>
+            <Bar dataKey="burn" fill={T.amber+'70'} stroke={T.amber} strokeWidth={1} radius={[3,3,0,0]} name="Burn"/>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  </div>;
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+const SUGGESTIONS=["Why did our cash flow drop?","What if we hire 3 engineers?","Show R&D credit status","Which AR invoices are at risk?"];
+function ChatView() {
+  const [msgs,setMsgs]=useState([{role:'assistant',content:"Hello! I'm your ANFOS AI Financial Assistant with live access to your financial data. Ask me anything — cash flow, scenario planning, AP/AR, tax, or compliance."}]);
+  const [input,setInput]=useState('');
+  const [loading,setLoading]=useState(false);
+  const bottomRef=useRef(null);
+  useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'})},[msgs]);
+  const send=useCallback(async(text)=>{
+    const q=(text||input).trim(); if(!q||loading) return;
+    setInput('');
+    const newMsgs=[...msgs,{role:'user',content:q}];
+    setMsgs(newMsgs); setLoading(true);
+    try {
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:SYSTEM_PROMPT,messages:newMsgs.map(m=>({role:m.role,content:m.content}))})});
+      const d=await r.json();
+      setMsgs(p=>[...p,{role:'assistant',content:d.content?.[0]?.text||'Error.'}]);
+    } catch { setMsgs(p=>[...p,{role:'assistant',content:'Connection error. Please try again.'}]); }
+    setLoading(false);
+  },[input,msgs,loading]);
+  return <div style={{display:'flex',flexDirection:'column',height:'100vh',animation:'fadein .2s ease'}}>
+    <div style={{padding:'18px 24px',borderBottom:`1px solid ${T.border}`,display:'flex',alignItems:'center',gap:12,flexShrink:0}}>
+      <div style={{width:36,height:36,borderRadius:10,background:T.blue+'33',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}}>🧠</div>
+      <div>
+        <div style={{fontSize:14,fontWeight:500,color:T.textPrimary}}>ANFOS AI Financial Assistant</div>
+        <div style={{fontSize:11,color:T.textSec}}>● Live data · Claude-powered</div>
+      </div>
+    </div>
+    <div style={{flex:1,overflowY:'auto',padding:'18px 24px',display:'flex',flexDirection:'column',gap:14}}>
+      {msgs.length===1&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
+        {SUGGESTIONS.map(s=><button key={s} onClick={()=>send(s)} style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:10,padding:'11px 13px',color:T.textSec,fontSize:12,textAlign:'left',cursor:'pointer',fontFamily:'inherit',lineHeight:1.4}}>"{s}"</button>)}
+      </div>}
+      {msgs.map((m,i)=>(
+        <div key={i} style={{display:'flex',gap:10,alignItems:'flex-start',flexDirection:m.role==='user'?'row-reverse':'row'}}>
+          <div style={{width:30,height:30,borderRadius:'50%',background:m.role==='user'?T.blue+'33':T.bgCard,border:`1px solid ${T.border}`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,fontSize:13}}>{m.role==='user'?'👤':'🧠'}</div>
+          <div style={{maxWidth:'72%',background:m.role==='user'?T.blue+'22':T.bgCard,border:`1px solid ${m.role==='user'?T.blue+'44':T.border}`,borderRadius:12,padding:'12px 16px',fontSize:13,color:T.textPrimary,lineHeight:1.6,whiteSpace:'pre-wrap'}}>{m.content}</div>
+        </div>
+      ))}
+      {loading&&<div style={{display:'flex',gap:10,alignItems:'flex-start'}}>
+        <div style={{width:30,height:30,borderRadius:'50%',background:T.bgCard,border:`1px solid ${T.border}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>🧠</div>
+        <div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:'14px 16px',display:'flex',gap:4}}>
+          {[0,1,2].map(i=><div key={i} style={{width:6,height:6,borderRadius:'50%',background:T.blue,animation:`bounce 1.2s ease-in-out ${i*.15}s infinite`}}/>)}
+        </div>
+      </div>}
+      <div ref={bottomRef}/>
+    </div>
+    <div style={{padding:'14px 24px',borderTop:`1px solid ${T.border}`,flexShrink:0}}>
+      <div style={{display:'flex',gap:10,background:T.bgCard,border:`1px solid ${T.borderMed}`,borderRadius:12,padding:'10px 14px'}}>
+        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Ask anything about your finances…" style={{flex:1,background:'transparent',border:'none',outline:'none',color:T.textPrimary,fontSize:13,fontFamily:'inherit'}}/>
+        <button onClick={()=>send()} style={{background:input.trim()&&!loading?T.blue:T.border,color:input.trim()&&!loading?'#fff':T.textMuted,border:'none',borderRadius:8,width:34,height:34,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,fontSize:14}}>→</button>
+      </div>
+    </div>
+  </div>;
+}
+
+// ── AP/AR ─────────────────────────────────────────────────────────────────────
+function APARView() {
+  const [tab,setTab]=useState('all');
+  const filtered=tab==='all'?INVOICES:tab==='flagged'?INVOICES.filter(i=>i.status==='flagged'):INVOICES.filter(i=>i.type===tab);
+  return <div style={{padding:26,animation:'fadein .2s ease'}}>
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:20,fontWeight:600,color:T.textPrimary,letterSpacing:'-.02em'}}>AP / AR Management</div>
+      <div style={{fontSize:12,color:T.textSec,marginTop:2}}>Invoice queue · AI-matched · Human review required for flagged items</div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:18}}>
+      {[['AP Outstanding','$122.9K','6 invoices',T.amber],['AR Overdue','$80.3K','2 at risk',T.red],['Auto-Match Rate','94.2%','Avg conf 91%',T.green]].map(([l,v,s,c])=>(
+        <div key={l} style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:10,padding:'14px 16px'}}>
+          <div style={{fontSize:11,color:T.textSec}}>{l}</div>
+          <div style={{fontSize:22,fontWeight:600,color:c,fontFamily:"'JetBrains Mono',monospace",margin:'6px 0'}}>{v}</div>
+          <div style={{fontSize:11,color:T.textSec}}>{s}</div>
+        </div>
+      ))}
+    </div>
+    <div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,overflow:'hidden'}}>
+      <div style={{display:'flex',borderBottom:`1px solid ${T.border}`}}>
+        {[['all','All'],['ap','Payable'],['ar','Receivable'],['flagged','Flagged']].map(([k,l])=>(
+          <button key={k} onClick={()=>setTab(k)} style={{padding:'11px 18px',border:'none',borderBottom:`2px solid ${tab===k?T.blue:'transparent'}`,background:'transparent',color:tab===k?T.blue:T.textSec,fontSize:13,fontWeight:tab===k?500:400,cursor:'pointer',fontFamily:'inherit'}}>{l}</button>
+        ))}
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'110px 1fr 90px 130px 140px 120px',padding:'9px 16px',borderBottom:`1px solid ${T.border}`}}>
+        {['Invoice','Vendor','Amount','Status','AI Match','Action'].map(h=><span key={h} style={{fontSize:10,color:T.textMuted,letterSpacing:'.06em',textTransform:'uppercase'}}>{h}</span>)}
+      </div>
+      {filtered.map((inv,i)=>{
+        const s=STATUS_META[inv.status];
+        const mc=inv.match>=90?T.green:inv.match>=70?T.amber:T.red;
+        return <div key={inv.id} style={{display:'grid',gridTemplateColumns:'110px 1fr 90px 130px 140px 120px',padding:'11px 16px',borderBottom:`1px solid ${T.border}`,alignItems:'center',background:i%2===0?'transparent':'rgba(7,12,24,.4)'}}>
+          <span style={{fontSize:12,color:T.textPrimary,fontFamily:"'JetBrains Mono',monospace"}}>{inv.id}</span>
+          <span style={{fontSize:13,color:T.textPrimary}}>{inv.vendor}</span>
+          <span style={{fontSize:13,color:T.textPrimary,fontFamily:"'JetBrains Mono',monospace"}}>${inv.amount.toLocaleString()}</span>
+          <div><Chip color={s.color}>{s.label}</Chip><div style={{fontSize:10,color:T.textSec,marginTop:3}}>{inv.due}</div></div>
+          <ConfBar value={inv.match} color={mc}/>
+          <div style={{display:'flex',gap:5}}>
+            {inv.status==='flagged'?<><button style={{background:T.green+'22',color:T.green,border:`1px solid ${T.green}44`,borderRadius:5,padding:'4px 8px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>Approve</button><button style={{background:T.red+'22',color:T.red,border:`1px solid ${T.red}44`,borderRadius:5,padding:'4px 8px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>Reject</button></>
+            :<button style={{background:T.blue+'22',color:T.blue,border:`1px solid ${T.blue}44`,borderRadius:5,padding:'4px 8px',fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>View</button>}
+          </div>
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
+// ── Forecasting ───────────────────────────────────────────────────────────────
+function ForecastingView() {
+  const [hires,setHires]=useState(0);
+  const [delayM,setDelayM]=useState(0);
+  const [office,setOffice]=useState(0);
+  const [mkt,setMkt]=useState(0);
+  const base=43.5,hc=hires*14.5,oc=office*8,mk=mkt*5,sv=delayM*hc*.3;
+  const burn=base+hc+oc+mk-sv;
+  const runway=Math.max(0,921/burn);
+  const color=runway>8?T.green:runway>5?T.amber:T.red;
+  const scenData=Array.from({length:13},(_,i)=>({w:`W${i+1}`,base:Math.max(0,921-base*i/4),scenario:Math.max(0,921-burn*i/4)}));
+  const sliders=[
+    {label:'New Engineer Hires',val:hires,set:setHires,max:10,cost:`+$${hc.toFixed(0)}K/mo`},
+    {label:'Hiring Delay (months)',val:delayM,set:setDelayM,max:6,cost:sv>0?`-$${sv.toFixed(0)}K saved`:'No savings'},
+    {label:'Office Expansion',val:office,set:setOffice,max:5,cost:`+$${oc.toFixed(0)}K/mo`},
+    {label:'Marketing Increase',val:mkt,set:setMkt,max:5,cost:`+$${mk.toFixed(0)}K/mo`},
+  ];
+  return <div style={{padding:26,animation:'fadein .2s ease'}}>
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:20,fontWeight:600,color:T.textPrimary,letterSpacing:'-.02em'}}>Forecasting & Scenario Planning</div>
+      <div style={{fontSize:12,color:T.textSec,marginTop:2}}>Adjust parameters to model strategic decisions in real time</div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 2fr',gap:16}}>
+      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+        <div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:20}}>
+          <div style={{fontSize:13,fontWeight:500,color:T.textPrimary,marginBottom:18}}>⚙ Scenario Controls</div>
+          {sliders.map(s=>(
+            <div key={s.label} style={{marginBottom:16}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                <span style={{fontSize:12,color:T.textSec}}>{s.label}</span>
+                <span style={{fontSize:11,color:s.cost.startsWith('-')?T.green:T.amber,fontFamily:"'JetBrains Mono',monospace"}}>{s.cost}</span>
+              </div>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <input type="range" min={0} max={s.max} value={s.val} onChange={e=>s.set(+e.target.value)} style={{flex:1}}/>
+                <span style={{fontSize:13,color:T.textPrimary,fontFamily:"'JetBrains Mono',monospace",minWidth:20}}>{s.val}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{background:T.bgCard,border:`1px solid ${color}44`,borderRadius:12,padding:20}}>
+          <div style={{fontSize:11,color:T.textSec,marginBottom:6}}>Projected Runway</div>
+          <div style={{fontSize:40,fontWeight:700,color,fontFamily:"'JetBrains Mono',monospace",letterSpacing:'-.02em'}}>{runway.toFixed(1)}<span style={{fontSize:16,fontWeight:400}}> mo</span></div>
+          <div style={{fontSize:12,color:T.textSec,marginTop:6}}>New burn: <span style={{color:T.textPrimary,fontFamily:"'JetBrains Mono',monospace"}}>${burn.toFixed(1)}K/mo</span></div>
+          <div style={{marginTop:10,padding:10,background:color+'10',borderRadius:8,fontSize:12,color:T.textSec,lineHeight:1.6}}>
+            {runway<6?'⚠ Runway below 6 months. Consider staging hires or a bridge round.':runway<8?'Runway healthy. Monitor AR collections carefully.':'Cash position looks strong.'}
+          </div>
+        </div>
+      </div>
+      <div style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:12,padding:20}}>
+        <div style={{fontSize:13,fontWeight:500,color:T.textPrimary,marginBottom:4}}>Cash Runway Comparison</div>
+        <div style={{fontSize:11,color:T.textSec,marginBottom:16}}>Base case vs. scenario · 13-week projection</div>
+        <ResponsiveContainer width="100%" height={310}>
+          <ComposedChart data={scenData} margin={{top:5,right:5,bottom:0,left:0}}>
+            <CartesianGrid stroke={T.border} strokeDasharray="3 3" vertical={false}/>
+            <XAxis dataKey="w" tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false}/>
+            <YAxis tick={{fill:T.textSec,fontSize:10}} axisLine={false} tickLine={false} tickFormatter={v=>`$${v.toFixed(0)}K`} width={55}/>
+            <Tooltip content={<Tip/>}/>
+            <Area type="monotone" dataKey="base" stroke={T.blue} strokeWidth={2} fill={T.blue+'15'} dot={false} name="Base Case"/>
+            <Line type="monotone" dataKey="scenario" stroke={color} strokeWidth={2} strokeDasharray="5 4" dot={false} name="Scenario"/>
+          </ComposedChart>
+        </ResponsiveContainer>
+        <div style={{marginTop:14,padding:12,background:color+'10',border:`1px solid ${color}33`,borderRadius:8}}>
+          <div style={{fontSize:11,fontWeight:500,color,marginBottom:4}}>AI Analysis</div>
+          <div style={{fontSize:12,color:T.textSec,lineHeight:1.6}}>
+            {burn>base?`Burn increases by $${(burn-base).toFixed(1)}K/mo, reducing runway from 7.2 to ${runway.toFixed(1)} months.`:'Scenario reduces burn — cash position improves.'}
+            {' '}{runway<5?' Seek additional capital immediately.':runway<7?' Monitor closely.':' Proceed with confidence.'}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+
+// ── Agents ────────────────────────────────────────────────────────────────────
+function AgentsView() {
+  const [selected,setSelected]=useState(null);
+  return <div style={{padding:26,animation:'fadein .2s ease'}}>
+    <div style={{marginBottom:18}}>
+      <div style={{fontSize:20,fontWeight:600,color:T.textPrimary,letterSpacing:'-.02em'}}>Agent Control Center</div>
+      <div style={{fontSize:12,color:T.textSec,marginTop:2}}>5 specialized agents · Real-time status · Progressive autonomy controls</div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:18}}>
+      {[['Tasks Today','337',T.blue],['Avg Confidence','92.4%',T.green],['HITL Escalations','3',T.amber],['Auto-Executed','312',T.cyan]].map(([l,v,c])=>(
+        <div key={l} style={{background:T.bgCard,border:`1px solid ${T.border}`,borderRadius:10,padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <span style={{fontSize:11,color:T.textSec}}>{l}</span>
+          <span style={{fontSize:18,fontWeight:600,color:c,fontFamily:"'JetBrains Mono',monospace"}}>{v}</span>
+        </div>
+      ))}
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+      {AGENTS.map(ag=>{
+        const sc=ag.status==='active'?T.green:ag.status==='alert'?T.red:T.amber;
+        const mc=ag.conf>=90?T.green:ag.conf>=75?T.amber:T.red;
+        const open=selected===ag.id;
+        return <div key={ag.id} onClick={()=>setSelected(open?null:ag.id)} style={{background:T.bgCard,border:`1px solid ${open?T.blue:T.border}`,borderRadius:12,padding:18,cursor:'pointer',transition:'border-color .15s'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:14}}>
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <div style={{width:36,height:36,borderRadius:10,background:T.blue+'22',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🖥</div>
+              <div>
+                <div style={{fontSize:14,fontWeight:500,color:T.textPrimary}}>{ag.name}</div>
+                <div style={{fontSize:11,color:T.textSec,marginTop:1}}>{ag.tasks} tasks today</div>
+              </div>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:5}}>
+              <Dot color={sc} pulse={ag.status!=='alert'}/>
+              <span style={{fontSize:10,color:sc,fontWeight:500,letterSpacing:'.05em'}}>{ag.status.toUpperCase()}</span>
+            </div>
+          </div>
+          <div style={{marginBottom:12}}>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:T.textSec,marginBottom:5}}><span>Confidence</span><span style={{fontFamily:"'JetBrains Mono',monospace"}}>{ag.conf}%</span></div>
+            <ConfBar value={ag.conf} color={mc}/>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div>
+              <div style={{fontSize:10,color:T.textMuted,marginBottom:4,letterSpacing:'.06em'}}>AUTONOMY</div>
+              <div style={{display:'flex',gap:3,alignItems:'center'}}>
+                {[1,2,3].map(l=><div key={l} style={{width:20,height:4,borderRadius:2,background:l<=ag.auto?AUTO_COLORS[ag.auto]:T.border}}/>)}
+                <span style={{fontSize:10,color:AUTO_COLORS[ag.auto],marginLeft:6,fontWeight:500}}>{AUTO_LABELS[ag.auto]}</span>
+              </div>
+            </div>
+            {ag.status==='alert'&&<Chip color={T.red}>Action Required</Chip>}
+          </div>
+          {open&&<div style={{marginTop:14,paddingTop:14,borderTop:`1px solid ${T.border}`}}>
+            <div style={{fontSize:10,color:T.textMuted,marginBottom:6,letterSpacing:'.06em'}}>LATEST ACTIVITY</div>
+            <div style={{fontSize:12,color:T.textSec,lineHeight:1.6}}>{ag.recent}</div>
+          </div>}
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
+function App() {
+  const [view,setView]=useState('dashboard');
+  const [role,setRole]=useState('ceo');
+  return <div style={{display:'flex',height:'100vh',overflow:'hidden'}}>
+    <Sidebar view={view} setView={setView}/>
+    <main style={{flex:1,overflowY:'auto'}}>
+      {view==='dashboard'&&<Dashboard role={role} setRole={setRole} setView={setView}/>}
+      {view==='chat'&&<ChatView/>}
+      {view==='apar'&&<APARView/>}
+      {view==='forecast'&&<ForecastingView/>}
+      {view==='agents'&&<AgentsView/>}
+    </main>
+  </div>;
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
