@@ -1,0 +1,25 @@
+import { useState } from 'react'
+import Sidebar from './components/Sidebar.jsx'
+import Dashboard from './views/Dashboard.jsx'
+import ChatView from './views/Chat.jsx'
+import APARView from './views/APAR.jsx'
+import ForecastingView from './views/Forecasting.jsx'
+import AgentsView from './views/Agents.jsx'
+
+export default function App() {
+  const [view, setView] = useState('dashboard')
+  const [role, setRole] = useState('ceo')
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Sidebar view={view} setView={setView} />
+      <main style={{ flex: 1, overflowY: 'auto' }}>
+        {view === 'dashboard'  && <Dashboard role={role} setRole={setRole} setView={setView} />}
+        {view === 'chat'       && <ChatView />}
+        {view === 'apar'       && <APARView />}
+        {view === 'forecast'   && <ForecastingView />}
+        {view === 'agents'     && <AgentsView />}
+      </main>
+    </div>
+  )
+}

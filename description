@@ -1,0 +1,70 @@
+export const T = {
+  bg:          '#070C18',
+  bgCard:      '#0C1628',
+  bgCardHover: '#101E36',
+  bgInput:     '#0A1525',
+  border:      '#162238',
+  borderMed:   '#1E3050',
+  borderBright:'#2A4578',
+  blue:        '#3B6FFF',
+  blueDim:     '#2854CC',
+  blueGlow:    'rgba(59,111,255,0.15)',
+  cyan:        '#00C8F0',
+  green:       '#00C67B',
+  amber:       '#FFB020',
+  red:         '#FF4D6A',
+  textPrimary: '#C8D8FF',
+  textSec:     '#5A7AB0',
+  textMuted:   '#2E4A72',
+  white:       '#FFFFFF',
+}
+
+export const ROLE_CONFIG = {
+  ceo: { label: 'CEO / Founder',       cards: ['runway','burn','arr','anomaly']   },
+  cfo: { label: 'CFO / Controller',    cards: ['runway','variance','close','tax'] },
+  ops: { label: 'Operations Manager',  cards: ['ap','ar','anomaly','close']       },
+}
+
+export const INSIGHT_CARDS = {
+  runway:   { title:'Cash Runway',       value:'7.2 mo',   sub:'↓ from 8.1 mo last week',  color:'amber', alert:'Runway drops to 5.8mo in 45 days if Q3 hiring proceeds.',            action:'Run Scenario',    view:'forecast' },
+  burn:     { title:'Monthly Burn',      value:'$43.5K',   sub:'+5.2% MoM',                color:'red',   alert:'Burn rate trending up 3 consecutive months.',                         action:'View Details',   view:null       },
+  arr:      { title:'ARR',               value:'$1.05M',   sub:'+18.3% YoY',               color:'green', alert:'3 enterprise deals could add $280K ARR.',                             action:'View Pipeline',  view:null       },
+  anomaly:  { title:'Anomaly Flagged',   value:'1 Alert',  sub:'New vendor, no PO',         color:'red',   alert:'CloudOps Partners: $14,200 — no PO on file. Match: 43%.',             action:'Investigate',    view:'apar'     },
+  variance: { title:'Budget Variance',   value:'−$28K',    sub:'Engineering over by 31%',   color:'amber', alert:'Engineering $28K over budget. Primary driver: cloud infra.',          action:'View Breakdown', view:null       },
+  close:    { title:'Month-End Close',   value:'94%',      sub:'3 items remaining',          color:'cyan',  alert:'Remaining: Prepaid amortization, 2 intercompany eliminations.',        action:'View Checklist', view:null       },
+  ap:       { title:'AP Outstanding',    value:'$122.9K',  sub:'Due next 14 days',           color:'amber', alert:'$14.2K flagged for manual review (new vendor).',                      action:'Review AP',      view:'apar'     },
+  ar:       { title:'AR at Risk',        value:'$80.3K',   sub:'2 invoices 30+ days',        color:'red',   alert:'Acme Corp $48.2K (14d) and Beta Systems $32.1K (31d).',              action:'Send Reminders', view:'apar'     },
+  tax:      { title:'Tax Nexus Alert',   value:'Texas',    sub:'74% of $100K threshold',     color:'amber', alert:'Estimated nexus breach in 38 days. Register now.',                    action:'Set Up Filing',  view:'agents'   },
+}
+
+export const INVOICES = [
+  { id:'INV-2847', vendor:'Acme Corp',           amount:48200, due:'14 days overdue',  status:'overdue',   match:97,  type:'ar' },
+  { id:'INV-2831', vendor:'Beta Systems LLC',    amount:32100, due:'31 days overdue',  status:'overdue',   match:91,  type:'ar' },
+  { id:'INV-2819', vendor:'Stripe Inc.',         amount:12800, due:'Due in 3 days',    status:'pending',   match:99,  type:'ap' },
+  { id:'INV-2815', vendor:'AWS / Amazon',        amount:8420,  due:'Due in 7 days',    status:'matched',   match:100, type:'ap' },
+  { id:'INV-2808', vendor:'CloudOps Partners',   amount:14200, due:'Due today',        status:'flagged',   match:43,  type:'ap' },
+  { id:'INV-2803', vendor:'Gusto Payroll',       amount:87500, due:'Scheduled',        status:'scheduled', match:100, type:'ap' },
+]
+
+export const AGENTS = [
+  { id:'ap',       name:'AP Agent',         status:'active',     tasks:14,  conf:97, auto:2, recent:'Matched INV-2815 (AWS) at 100% confidence. Payment scheduled May 1.'                          },
+  { id:'ar',       name:'AR Agent',         status:'active',     tasks:8,   conf:89, auto:2, recent:'Sent dunning email to Acme Corp (INV-2847, 14 days overdue). Next: escalation script.'        },
+  { id:'recon',    name:'Reconciliation',   status:'active',     tasks:312, conf:99, auto:3, recent:'312 transactions matched today. 2 anomalies flagged. Month-end close: 94% complete.'           },
+  { id:'forecast', name:'Forecasting',      status:'processing', tasks:3,   conf:82, auto:2, recent:'Recalculating 13-week cash flow. New payroll data ingested from Gusto.'                        },
+  { id:'tax',      name:'Tax & Compliance', status:'alert',      tasks:2,   conf:95, auto:1, recent:'ALERT: Texas economic nexus at 74% of $100K threshold. Estimated breach in 38 days.'          },
+]
+
+export const CASH_DATA = [
+  { m:'Oct', cash:1240, fc:1240 }, { m:'Nov', cash:1198, fc:1198 }, { m:'Dec', cash:1142, fc:1142 },
+  { m:'Jan', cash:1082, fc:1082 }, { m:'Feb', cash:1035, fc:1035 }, { m:'Mar', cash:986,  fc:986  },
+  { m:'Apr', cash:921,  fc:921  }, { m:'May', cash:null, fc:867  }, { m:'Jun', cash:null, fc:798  },
+  { m:'Jul', cash:null, fc:722  }, { m:'Aug', cash:null, fc:638  }, { m:'Sep', cash:null, fc:545  },
+  { m:'Oct', cash:null, fc:441  },
+]
+
+export const BURN_DATA = [
+  { m:'Oct', burn:38.2 }, { m:'Nov', burn:39.8 }, { m:'Dec', burn:42.1 },
+  { m:'Jan', burn:44.3 }, { m:'Feb', burn:43.8 }, { m:'Mar', burn:45.2 },
+]
+
+export const SYSTEM_PROMPT = `You are ANFOS, an AI Financial Operating System for a Series A startup. Real-time data: Cash $921K, Burn $43.5K/mo, Runway 7.2 months (declining), ARR $1.05M (+18.3% YoY). AR overdue: $80.3K (Acme Corp $48.2K 14d, Beta Systems $32.1K 31d). AP queue: $122.9K next 14 days; CloudOps Partners $14.2K flagged (no PO, 43% match). Tax: Texas nexus 74% of $100K threshold, breach in ~38 days. Month-end close: 94%. R&D credit: $482K qualified spend, ~$96.4K projected, 3 doc gaps. Engineering budget variance: -$28K. Respond concisely like a senior CFO advisor. Use the data. Be direct and actionable. Keep responses under 200 words.`

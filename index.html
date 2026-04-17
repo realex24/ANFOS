@@ -1,0 +1,108 @@
+import { Bell } from 'lucide-react'
+import { AreaChart, Area, BarChart, Bar, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { T, ROLE_CONFIG, INSIGHT_CARDS, CASH_DATA, BURN_DATA } from '../constants.js'
+import { Chip, CustomTooltip } from './UI.jsx'
+
+function InsightCard({ cardKey, onAction }) {
+  const c = INSIGHT_CARDS[cardKey]
+  if (!c) return null
+  const color = { amber: T.amber, red: T.red, green: T.green, cyan: T.cyan }[c.color]
+  const badge = c.color === 'green' ? 'GROWING' : c.color === 'red' ? '↑ RISK' : 'ALERT'
+  return (
+    <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <span style={{ fontSize: 11, color: T.textSec, letterSpacing: '.03em' }}>{c.title}</span>
+        <Chip color={color}>{badge}</Chip>
+      </div>
+      <div style={{ fontSize: 24, fontWeight: 600, color: T.textPrimary, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-.02em' }}>{c.value}</div>
+      <div style={{ fontSize: 12, color: T.textSec }}>{c.sub}</div>
+      <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 10, fontSize: 12, color: T.textSec, lineHeight: 1.5 }}>{c.alert}</div>
+      <button
+        onClick={() => c.view && onAction(c.view)}
+        style={{ alignSelf: 'flex-start', background: color + '18', color, border: `1px solid ${color}44`, borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+      >
+        {c.action} →
+      </button>
+    </div>
+  )
+}
+
+export default function Dashboard({ role, setRole, setView }) {
+  const cards = ROLE_CONFIG[role]?.cards || ROLE_CONFIG.ceo.cards
+
+  return (
+    <div style={{ padding: 26, minHeight: '100vh', animation: 'fadein .2s ease' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 600, color: T.textPrimary, letterSpacing: '-.02em' }}>Financial Overview</div>
+          <div style={{ fontSize: 12, color: T.textSec, marginTop: 2 }}>April 17, 2026 · Live · Synced 2 min ago</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 2, background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 8, padding: 3 }}>
+            {Object.entries(ROLE_CONFIG).map(([k, v]) => (
+              <button key={k} onClick={() => setRole(k)} style={{ padding: '6px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: role === k ? T.blue : 'transparent', color: role === k ? '#fff' : T.textSec, fontSize: 12, fontWeight: role === k ? 500 : 400, transition: 'all .15s' }}>
+                {v.label.split(' / ')[0]}
+              </button>
+            ))}
+          </div>
+          <div style={{ position: 'relative', cursor: 'pointer' }}>
+            <Bell size={18} color={T.textSec} />
+            <span style={{ position: 'absolute', top: -4, right: -4, background: T.red, color: '#fff', borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700 }}>3</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Insight cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18 }}>
+        {cards.map(k => <InsightCard key={k} cardKey={k} onAction={setView} />)}
+      </div>
+
+      {/* Charts */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14 }}>
+        <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: T.textPrimary }}>Cash Position & Runway Forecast</div>
+              <div style={{ fontSize: 11, color: T.textSec, marginTop: 2 }}>Actual (solid) + AI forecast (dashed)</div>
+            </div>
+            <Chip color={T.amber}>7.2 months</Chip>
+          </div>
+          <ResponsiveContainer width="100%" height={190}>
+            <ComposedChart data={CASH_DATA} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+              <CartesianGrid stroke={T.border} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="m" tick={{ fill: T.textSec, fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: T.textSec, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}K`} width={50} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="cash" stroke={T.blue} strokeWidth={2} fill={T.blue + '18'} dot={false} name="Actual Cash" connectNulls={false} />
+              <Line type="monotone" dataKey="fc" stroke={T.cyan} strokeWidth={1.5} strokeDasharray="5 4" dot={false} name="AI Forecast" connectNulls />
+            </ComposedChart>
+          </ResponsiveContainer>
+          <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: 11 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: T.textSec }}><span style={{ width: 16, height: 2, background: T.blue, display: 'inline-block', borderRadius: 1 }} />Actual Cash</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: T.textSec }}><span style={{ width: 16, height: 0, borderTop: `2px dashed ${T.cyan}`, display: 'inline-block' }} />AI Forecast</span>
+          </div>
+        </div>
+
+        <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: T.textPrimary, marginBottom: 4 }}>Monthly Burn Rate</div>
+          <div style={{ fontSize: 11, color: T.textSec, marginBottom: 14 }}>6-month trend</div>
+          <ResponsiveContainer width="100%" height={190}>
+            <BarChart data={BURN_DATA} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
+              <CartesianGrid stroke={T.border} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="m" tick={{ fill: T.textSec, fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: T.textSec, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}K`} width={40} />
+              <Tooltip content={({ active, payload, label }) => active && payload?.length ? (
+                <div style={{ background: T.bgCard, border: `1px solid ${T.borderMed}`, borderRadius: 8, padding: '8px 12px' }}>
+                  <div style={{ fontSize: 12, color: T.textSec }}>{label}</div>
+                  <div style={{ fontSize: 13, color: T.amber, fontFamily: "'JetBrains Mono', monospace" }}>${payload[0].value}K</div>
+                </div>
+              ) : null} />
+              <Bar dataKey="burn" fill={T.amber + '70'} stroke={T.amber} strokeWidth={1} radius={[3, 3, 0, 0]} name="Burn" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,120 @@
+import { useState } from 'react'
+import { Sliders } from 'lucide-react'
+import { AreaChart, Area, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { T } from '../constants.js'
+import { CustomTooltip } from './UI.jsx'
+
+const WEEKS = Array.from({ length: 13 }, (_, i) => `W${i + 1}`)
+
+export default function ForecastingView() {
+  const [hires,    setHires]    = useState(0)
+  const [delayM,   setDelayM]   = useState(0)
+  const [officeExp,setOfficeExp]= useState(0)
+  const [mktBudget,setMktBudget]= useState(0)
+
+  const base = 43.5
+  const hc   = hires * 14.5
+  const oc   = officeExp * 8
+  const mk   = mktBudget * 5
+  const sv   = delayM * hc * 0.3
+  const burn = base + hc + oc + mk - sv
+  const runway = Math.max(0, 921 / burn)
+  const color  = runway > 8 ? T.green : runway > 5 ? T.amber : T.red
+
+  const scenarioData = WEEKS.map((w, i) => ({
+    w,
+    base:     Math.max(0, 921 - base * i / 4),
+    scenario: Math.max(0, 921 - burn * i / 4),
+  }))
+
+  const sliders = [
+    { label: 'New Engineer Hires',      val: hires,     set: setHires,    max: 10, cost: `+$${(hc).toFixed(0)}K/mo`              },
+    { label: 'Hiring Delay (months)',   val: delayM,    set: setDelayM,   max: 6,  cost: sv > 0 ? `-$${sv.toFixed(0)}K saved` : 'No savings' },
+    { label: 'Office Expansion',        val: officeExp, set: setOfficeExp,max: 5,  cost: `+$${oc.toFixed(0)}K/mo`               },
+    { label: 'Marketing Budget Incr.',  val: mktBudget, set: setMktBudget,max: 5,  cost: `+$${mk.toFixed(0)}K/mo`               },
+  ]
+
+  return (
+    <div style={{ padding: 26, animation: 'fadein .2s ease' }}>
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontSize: 20, fontWeight: 600, color: T.textPrimary, letterSpacing: '-.02em' }}>Forecasting & Scenario Planning</div>
+        <div style={{ fontSize: 12, color: T.textSec, marginTop: 2 }}>Adjust parameters to model strategic decisions in real time</div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 16 }}>
+        {/* Controls */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: T.textPrimary, marginBottom: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Sliders size={14} color={T.blue} /> Scenario Controls
+            </div>
+            {sliders.map(s => (
+              <div key={s.label} style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, color: T.textSec }}>{s.label}</span>
+                  <span style={{ fontSize: 11, color: s.cost.startsWith('-') ? T.green : T.amber, fontFamily: "'JetBrains Mono', monospace" }}>{s.cost}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input type="range" min={0} max={s.max} value={s.val} onChange={e => s.set(+e.target.value)} style={{ flex: 1, accentColor: T.blue }} />
+                  <span style={{ fontSize: 13, color: T.textPrimary, fontFamily: "'JetBrains Mono', monospace", minWidth: 20 }}>{s.val}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Runway result */}
+          <div style={{ background: T.bgCard, border: `1px solid ${color}44`, borderRadius: 12, padding: 20 }}>
+            <div style={{ fontSize: 11, color: T.textSec, marginBottom: 6 }}>Projected Runway</div>
+            <div style={{ fontSize: 40, fontWeight: 700, color, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '-.02em' }}>
+              {runway.toFixed(1)}<span style={{ fontSize: 16, fontWeight: 400 }}> mo</span>
+            </div>
+            <div style={{ fontSize: 12, color: T.textSec, marginTop: 6 }}>
+              New burn: <span style={{ color: T.textPrimary, fontFamily: "'JetBrains Mono', monospace" }}>${burn.toFixed(1)}K/mo</span>
+            </div>
+            <div style={{ marginTop: 10, padding: 10, background: color + '10', borderRadius: 8, fontSize: 12, color: T.textSec, lineHeight: 1.6 }}>
+              {runway < 6 ? '⚠ Runway below 6 months. Consider staging hires or a bridge round.'
+               : runway < 8 ? 'Runway healthy. Monitor AR collections to maintain coverage.'
+               : 'Cash position looks strong under these parameters.'}
+            </div>
+          </div>
+        </div>
+
+        {/* Chart */}
+        <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, borderRadius: 12, padding: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: T.textPrimary }}>Cash Runway Comparison</div>
+              <div style={{ fontSize: 11, color: T.textSec, marginTop: 2 }}>Base case vs. your scenario · 13-week</div>
+            </div>
+            <div style={{ display: 'flex', gap: 14, fontSize: 11 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: T.textSec }}><span style={{ width: 16, height: 2, background: T.blue, display: 'inline-block' }} />Base</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: T.textSec }}><span style={{ width: 16, height: 0, borderTop: `2px dashed ${color}`, display: 'inline-block' }} />Scenario</span>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={310}>
+            <ComposedChart data={scenarioData} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+              <CartesianGrid stroke={T.border} strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="w" tick={{ fill: T.textSec, fontSize: 10 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: T.textSec, fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v.toFixed(0)}K`} width={55} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="base" stroke={T.blue} strokeWidth={2} fill={T.blue + '15'} dot={false} name="Base Case" />
+              <Line type="monotone" dataKey="scenario" stroke={color} strokeWidth={2} strokeDasharray="5 4" dot={false} name="Scenario" />
+            </ComposedChart>
+          </ResponsiveContainer>
+
+          <div style={{ marginTop: 14, padding: 12, background: color + '10', border: `1px solid ${color}33`, borderRadius: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 500, color, marginBottom: 4 }}>AI Analysis</div>
+            <div style={{ fontSize: 12, color: T.textSec, lineHeight: 1.6 }}>
+              {burn > base
+                ? `This scenario increases burn by $${(burn - base).toFixed(1)}K/mo, reducing runway from 7.2 to ${runway.toFixed(1)} months.`
+                : 'Scenario reduces burn. Cash position improves versus base case.'}
+              {' '}{runway < 5 ? 'Immediate action recommended: stage hires or seek additional capital.'
+                  : runway < 7 ? 'Monitor closely and maintain AR collections above 90%.'
+                  : 'Proceed with confidence — cash coverage remains strong.'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
