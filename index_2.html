@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ANFOS — AI-Native Financial OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"/>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#070C18;color:#C8D8FF;font-family:'Outfit',sans-serif;-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden}
+#app{display:flex;height:100vh}
+/* Sidebar */
+#sidebar{width:200px;background:#0C1628;border-right:1px solid #162238;display:flex;flex-direction:column;height:100vh;flex-shrink:0}
+.logo{padding:18px 16px 14px;border-bottom:1px solid #162238;display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;border-radius:8px;background:#3B6FFF;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.logo-text{font-size:14px;font-weight:600;color:#C8D8FF}
+.logo-sub{font-size:9px;color:#5A7AB0;letter-spacing:.1em}
+nav{padding:10px 8px;flex:1}
+.nav-btn{width:100%;display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:2px;border-radius:8px;border:none;cursor:pointer;background:transparent;color:#5A7AB0;font-size:13px;font-family:'Outfit',sans-serif;transition:all .15s;text-align:left}
+.nav-btn:hover{background:#101E36;color:#C8D8FF}
+.nav-btn.active{background:rgba(59,111,255,0.15);color:#3B6FFF}
+.nav-badge{margin-left:auto;background:#FF4D6A33;color:#FF4D6A;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:600}
+.user-area{padding:14px;border-top:1px solid #162238;display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:#3B6FFF33;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#3B6FFF;flex-shrink:0}
+/* Main */
+#main{flex:1;overflow-y:auto}
+.view{padding:26px;min-height:100vh;animation:fadein .2s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* Cards */
+.card{background:#0C1628;border:1px solid #162238;border-radius:12px;padding:18px}
+.metric-card{background:#0C1628;border:1px solid #162238;border-radius:10px;padding:14px 16px}
+.chip{border-radius:4px;padding:2px 8px;font-size:11px;font-weight:500;letter-spacing:.04em;display:inline-block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.grid-chart{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.grid-scenario{display:grid;grid-template-columns:1fr 2fr;gap:16px}
+.grid-agents{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* Buttons */
+.btn-action{border-radius:6px;padding:5px 12px;font-size:12px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;border:1px solid;transition:all .15s}
+.btn-sm{border-radius:5px;padding:4px 9px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;border:1px solid}
+.btn-role{padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:12px;transition:all .15s}
+.tab-btn{padding:11px 18px;border:none;border-bottom:2px solid transparent;background:transparent;cursor:pointer;font-size:13px;font-family:'Outfit',sans-serif;transition:all .15s}
+/* Table */
+.inv-table{background:#0C1628;border:1px solid #162238;border-radius:12px;overflow:hidden}
+.inv-row{display:grid;grid-template-columns:100px 1fr 90px 130px 140px 120px;padding:11px 16px;border-bottom:1px solid #162238;align-items:center}
+.inv-header{display:grid;grid-template-columns:100px 1fr 90px 130px 140px 120px;padding:9px 16px;border-bottom:1px solid #162238}
+/* Chat */
+#chat-wrap{display:flex;flex-direction:column;height:100vh}
+#chat-msgs{flex:1;overflow-y:auto;padding:18px 24px;display:flex;flex-direction:column;gap:14px}
+.msg{display:flex;gap:10px;align-items:flex-start}
+.msg.user{flex-direction:row-reverse}
+.msg-icon{width:30px;height:30px;border-radius:50%;border:1px solid #162238;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
+.msg-bubble{max-width:72%;border-radius:12px;padding:12px 16px;font-size:13px;line-height:1.6;white-space:pre-wrap}
+.msg.user .msg-bubble{background:#3B6FFF22;border:1px solid #3B6FFF44;color:#C8D8FF}
+.msg.ai .msg-bubble{background:#0C1628;border:1px solid #162238;color:#C8D8FF}
+#chat-input-wrap{padding:14px 24px;border-top:1px solid #162238;flex-shrink:0}
+#chat-input-row{display:flex;gap:10px;background:#0C1628;border:1px solid #1E3050;border-radius:12px;padding:10px 14px}
+#chat-input{flex:1;background:transparent;border:none;outline:none;color:#C8D8FF;font-size:13px;font-family:'Outfit',sans-serif}
+#chat-send{background:#3B6FFF;color:#fff;border:none;border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:14px;flex-shrink:0}
+/* Conf bar */
+.conf-wrap{display:flex;align-items:center;gap:8px}
+.conf-track{flex:1;height:4px;background:#162238;border-radius:2px;overflow:hidden}
+.conf-fill{height:100%;border-radius:2px}
+/* Range */
+input[type=range]{width:100%;accent-color:#3B6FFF;height:4px}
+/* Scroll */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1E3050;border-radius:2px}
+/* Bounce */
+@keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+.dot{width:6px;height:6px;border-radius:50%;background:#3B6FFF;display:inline-block}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let VIEW = 'dashboard', ROLE = 'ceo', APAR_TAB = 'all', SEL_AGENT = null;
+let chatMsgs = [{role:'ai', text:"Hello! I'm your ANFOS AI Financial Assistant. Ask me anything about your finances."}];
+let chatLoading = false;
+let hires=0, delayM=0, officeExp=0, mktBudget=0;
+let charts = {};
+
+// ── Data ─────────────────────────────────────────────────────────────────────
+const T = {blue:'#3B6FFF',cyan:'#00C8F0',green:'#00C67B',amber:'#FFB020',red:'#FF4D6A',tp:'#C8D8FF',ts:'#5A7AB0',tm:'#2E4A72',border:'#162238',card:'#0C1628'};
+const ROLES = {ceo:{label:'CEO',cards:['runway','burn','arr','anomaly']},cfo:{label:'CFO',cards:['runway','variance','close','tax']},ops:{label:'Ops',cards:['ap','ar','anomaly','close']}};
+const CMAP = {amber:T.amber,red:T.red,green:T.green,cyan:T.cyan};
+const CD = {
+  runway:{title:'Cash Runway',value:'7.2 mo',sub:'↓ from 8.1 mo last week',col:'amber',alert:'Runway drops to 5.8mo in 45 days if Q3 hiring proceeds.',action:'Run Scenario',view:'forecast'},
+  burn:{title:'Monthly Burn',value:'$43.5K',sub:'+5.2% MoM',col:'red',alert:'Burn rate trending up 3 consecutive months.',action:'View Details',view:null},
+  arr:{title:'ARR',value:'$1.05M',sub:'+18.3% YoY',col:'green',alert:'3 enterprise deals could add $280K ARR.',action:'View Pipeline',view:null},
+  anomaly:{title:'Anomaly Flagged',value:'1 Alert',sub:'New vendor, no PO',col:'red',alert:'CloudOps Partners: $14,200 — no PO on file. Match: 43%.',action:'Investigate',view:'apar'},
+  variance:{title:'Budget Variance',value:'−$28K',sub:'Engineering over 31%',col:'amber',alert:'Engineering $28K over budget. Primary driver: cloud infra.',action:'View Breakdown',view:null},
+  close:{title:'Month-End Close',value:'94%',sub:'3 items remaining',col:'cyan',alert:'Remaining: Prepaid amortization, 2 intercompany eliminations.',action:'View Checklist',view:null},
+  ap:{title:'AP Outstanding',value:'$122.9K',sub:'Due next 14 days',col:'amber',alert:'$14.2K flagged for manual review (new vendor).',action:'Review AP',view:'apar'},
+  ar:{title:'AR at Risk',value:'$80.3K',sub:'2 invoices 30+ days',col:'red',alert:'Acme $48.2K (14d) and Beta Systems $32.1K (31d).',action:'Send Reminders',view:'apar'},
+  tax:{title:'Tax Nexus Alert',value:'Texas',sub:'74% of $100K threshold',col:'amber',alert:'Estimated nexus breach in 38 days. Register now.',action:'Set Up Filing',view:'agents'},
+};
+const INVOICES = [
+  {id:'INV-2847',vendor:'Acme Corp',amount:48200,due:'14 days overdue',status:'overdue',match:97,type:'ar'},
+  {id:'INV-2831',vendor:'Beta Systems LLC',amount:32100,due:'31 days overdue',status:'overdue',match:91,type:'ar'},
+  {id:'INV-2819',vendor:'Stripe Inc.',amount:12800,due:'Due in 3 days',status:'pending',match:99,type:'ap'},
+  {id:'INV-2815',vendor:'AWS / Amazon',amount:8420,due:'Due in 7 days',status:'matched',match:100,type:'ap'},
+  {id:'INV-2808',vendor:'CloudOps Partners',amount:14200,due:'Due today',status:'flagged',match:43,type:'ap'},
+  {id:'INV-2803',vendor:'Gusto Payroll',amount:87500,due:'Scheduled',status:'scheduled',match:100,type:'ap'},
+];
+const SM = {overdue:{c:T.red,l:'Overdue'},pending:{c:T.amber,l:'Pending'},matched:{c:T.green,l:'Matched'},flagged:{c:T.red,l:'⚠ Flagged'},scheduled:{c:T.cyan,l:'Scheduled'}};
+const AGENTS = [
+  {id:'ap',name:'AP Agent',status:'active',tasks:14,conf:97,auto:2,recent:'Matched INV-2815 (AWS) at 100% confidence. Payment scheduled May 1.'},
+  {id:'ar',name:'AR Agent',status:'active',tasks:8,conf:89,auto:2,recent:'Sent dunning email to Acme Corp (14 days overdue). Next: escalation.'},
+  {id:'recon',name:'Reconciliation',status:'active',tasks:312,conf:99,auto:3,recent:'312 transactions matched today. Month-end close: 94% complete.'},
+  {id:'forecast',name:'Forecasting',status:'processing',tasks:3,conf:82,auto:2,recent:'Recalculating 13-week cash flow. New payroll data ingested from Gusto.'},
+  {id:'tax',name:'Tax & Compliance',status:'alert',tasks:2,conf:95,auto:1,recent:'ALERT: Texas nexus at 74% of $100K threshold. Breach in ~38 days.'},
+];
+const AL = ['—','Assisted','Semi-Auto','Fully Auto'];
+const AC = [T.tm,T.blue,T.cyan,T.green];
+const SYS = 'You are ANFOS, an AI CFO for a Series A startup. Cash $921K, Burn $43.5K/mo, Runway 7.2mo, ARR $1.05M. AR overdue $80.3K. Texas nexus 74%. R&D credit $96K projected. Respond as a direct CFO advisor under 200 words.';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const chip = (color, text) => `<span class="chip" style="background:${color}22;color:${color};border:1px solid ${color}44">${text}</span>`;
+const confBar = (val, color) => `<div class="conf-wrap"><div class="conf-track"><div class="conf-fill" style="width:${val}%;background:${color}"></div></div><span style="font-size:11px;color:${T.ts};min-width:32px;font-family:'JetBrains Mono',monospace">${val}%</span></div>`;
+const mono = (text, color) => `<span style="font-family:'JetBrains Mono',monospace;color:${color||T.tp}">${text}</span>`;
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+function sidebar() {
+  const nav = [
+    {id:'dashboard',icon:'▦',label:'Dashboard'},
+    {id:'chat',icon:'💬',label:'AI Assistant'},
+    {id:'apar',icon:'📄',label:'AP / AR'},
+    {id:'forecast',icon:'📊',label:'Forecasting'},
+    {id:'agents',icon:'🤖',label:'Agent Control',badge:'1'},
+  ];
+  return `<div id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div><div class="logo-text">ANFOS</div><div class="logo-sub">FINANCIAL OS</div></div>
+    </div>
+    <nav>
+      ${nav.map(n=>`<button class="nav-btn ${VIEW===n.id?'active':''}" onclick="go('${n.id}')">
+        <span>${n.icon}</span>${n.label}${n.badge?`<span class="nav-badge">${n.badge}</span>`:''}
+      </button>`).join('')}
+    </nav>
+    <div class="user-area">
+      <div class="avatar">JD</div>
+      <div><div style="font-size:12px;font-weight:500;color:${T.tp}">Jordan Davis</div><div style="font-size:10px;color:${T.ts}">7.2mo runway</div></div>
+    </div>
+  </div>`;
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function insightCard(key) {
+  const c = CD[key]; if (!c) return '';
+  const col = CMAP[c.col];
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:11px;color:${T.ts}">${c.title}</span>
+      ${chip(col, c.col==='green'?'UP':c.col==='red'?'RISK':'ALERT')}
+    </div>
+    <div style="font-size:23px;font-weight:600;color:${T.tp};font-family:'JetBrains Mono',monospace;letter-spacing:-.02em;margin-bottom:4px">${c.value}</div>
+    <div style="font-size:12px;color:${T.ts};margin-bottom:10px">${c.sub}</div>
+    <div style="border-top:1px solid ${T.border};padding-top:10px;font-size:12px;color:${T.ts};line-height:1.5;margin-bottom:10px">${c.alert}</div>
+    <button class="btn-action" style="background:${col}18;color:${col};border-color:${col}44" onclick="${c.view?`go('${c.view}')`:'void(0)'}">
+      ${c.action} →
+    </button>
+  </div>`;
+}
+
+function dashView() {
+  const cards = ROLES[ROLE].cards;
+  return `<div class="view">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+      <div>
+        <div style="font-size:20px;font-weight:600;color:${T.tp};letter-spacing:-.02em">Financial Overview</div>
+        <div style="font-size:12px;color:${T.ts};margin-top:2px">April 17, 2026 · Live · Synced 2 min ago</div>
+      </div>
+      <div style="display:flex;gap:2px;background:${T.card};border:1px solid ${T.border};border-radius:8px;padding:3px">
+        ${Object.entries(ROLES).map(([k,v])=>`
+          <button class="btn-role" style="background:${ROLE===k?T.blue:'transparent'};color:${ROLE===k?'#fff':T.ts}" onclick="setRole('${k}')">${v.label}</button>
+        `).join('')}
+      </div>
+    </div>
+    <div class="grid2" style="margin-bottom:18px">${cards.map(insightCard).join('')}</div>
+    <div class="grid-chart">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div>
+            <div style="font-size:13px;font-weight:500;color:${T.tp}">Cash Position & Runway Forecast</div>
+            <div style="font-size:11px;color:${T.ts};margin-top:2px">Actual (solid) + AI forecast (dashed)</div>
+          </div>
+          ${chip(T.amber,'7.2 months')}
+        </div>
+        <div style="position:relative;height:180px"><canvas id="runwayChart"></canvas></div>
+        <div style="display:flex;gap:16px;margin-top:10px;font-size:11px">
+          <span style="display:flex;align-items:center;gap:5px;color:${T.ts}"><span style="width:16px;height:2px;background:${T.blue};display:inline-block"></span> Actual</span>
+          <span style="display:flex;align-items:center;gap:5px;color:${T.ts}"><span style="width:16px;border-top:2px dashed ${T.cyan};display:inline-block"></span> Forecast</span>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:500;color:${T.tp};margin-bottom:4px">Monthly Burn Rate</div>
+        <div style="font-size:11px;color:${T.ts};margin-bottom:14px">6-month trend</div>
+        <div style="position:relative;height:180px"><canvas id="burnChart"></canvas></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+const SUGG = ["Why did our cash flow drop?","What if we hire 3 engineers?","Show R&D credit status","Which AR invoices are at risk?"];
+
+function chatView() {
+  const msgs = chatMsgs.map(m=>`
+    <div class="msg ${m.role}">
+      <div class="msg-icon" style="background:${m.role==='user'?T.blue+'33':T.card}">${m.role==='user'?'👤':'🧠'}</div>
+      <div class="msg-bubble">${m.text}</div>
+    </div>`).join('');
+  const sugg = chatMsgs.length===1 ? `<div class="grid2" style="margin-top:8px">
+    ${SUGG.map(s=>`<button onclick="sendChat('${s.replace(/'/g,"\\'")}','${s.replace(/'/g,"\\'")}','${s.replace(/'/g,"\\'")}','${s.replace(/'/g,"\\'")}','${s.replace(/'/g,"\\'")}','${s.replace(/'/g,"\\'")}')" style="background:${T.card};border:1px solid ${T.border};border-radius:10px;padding:11px 13px;color:${T.ts};font-size:12px;text-align:left;cursor:pointer;font-family:'Outfit',sans-serif;line-height:1.4">"${s}"</button>`).join('')}
+  </div>` : '';
+  const loading = chatLoading ? `<div class="msg ai"><div class="msg-icon" style="background:${T.card}">🧠</div><div class="msg-bubble" style="background:${T.card};border:1px solid ${T.border}"><div style="display:flex;gap:4px">${[0,1,2].map(i=>`<div class="dot" style="animation:bounce 1.2s ease-in-out ${i*.15}s infinite"></div>`).join('')}</div></div></div>` : '';
+  return `<div id="chat-wrap">
+    <div style="padding:18px 24px;border-bottom:1px solid ${T.border};display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <div style="width:36px;height:36px;border-radius:10px;background:${T.blue}33;display:flex;align-items:center;justify-content:center;font-size:18px">🧠</div>
+      <div><div style="font-size:14px;font-weight:500;color:${T.tp}">ANFOS AI Assistant</div><div style="font-size:11px;color:${T.ts}">● Live · Claude-powered</div></div>
+    </div>
+    <div id="chat-msgs">${sugg}${msgs}${loading}</div>
+    <div id="chat-input-wrap">
+      <div id="chat-input-row">
+        <input id="chat-input" placeholder="Ask anything about your finances…" onkeydown="if(event.key==='Enter')sendChat()"/>
+        <button id="chat-send" onclick="sendChat()">→</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── AP/AR ─────────────────────────────────────────────────────────────────────
+function aparView() {
+  const filtered = APAR_TAB==='all' ? INVOICES : APAR_TAB==='flagged' ? INVOICES.filter(i=>i.status==='flagged') : INVOICES.filter(i=>i.type===APAR_TAB);
+  const tabs = [['all','All'],['ap','Payable'],['ar','Receivable'],['flagged','Flagged']];
+  return `<div class="view">
+    <div style="margin-bottom:18px">
+      <div style="font-size:20px;font-weight:600;color:${T.tp};letter-spacing:-.02em">AP / AR Management</div>
+      <div style="font-size:12px;color:${T.ts};margin-top:2px">Invoice queue · AI-matched · Human review required for flagged items</div>
+    </div>
+    <div class="grid3" style="margin-bottom:18px">
+      ${[['AP Outstanding','$122.9K','6 invoices',T.amber],['AR Overdue','$80.3K','2 at risk',T.red],['Match Rate','94.2%','Avg conf 91%',T.green]].map(([l,v,s,c])=>`
+        <div class="metric-card">
+          <div style="font-size:11px;color:${T.ts}">${l}</div>
+          <div style="font-size:22px;font-weight:600;color:${c};font-family:'JetBrains Mono',monospace;margin:6px 0">${v}</div>
+          <div style="font-size:11px;color:${T.ts}">${s}</div>
+        </div>`).join('')}
+    </div>
+    <div class="inv-table">
+      <div style="display:flex;border-bottom:1px solid ${T.border}">
+        ${tabs.map(([k,l])=>`<button class="tab-btn" style="color:${APAR_TAB===k?T.blue:T.ts};border-bottom-color:${APAR_TAB===k?T.blue:'transparent'};font-weight:${APAR_TAB===k?500:400}" onclick="setAparTab('${k}')">${l}</button>`).join('')}
+      </div>
+      <div class="inv-header">
+        ${['Invoice','Vendor','Amount','Status','AI Match','Action'].map(h=>`<span style="font-size:10px;color:${T.tm};letter-spacing:.06em;text-transform:uppercase">${h}</span>`).join('')}
+      </div>
+      ${filtered.map((inv,i)=>{
+        const s=SM[inv.status], mc=inv.match>=90?T.green:inv.match>=70?T.amber:T.red;
+        return `<div class="inv-row" style="background:${i%2===0?'transparent':'rgba(7,12,24,.4)'}">
+          <span style="font-size:11px;color:${T.tp};font-family:'JetBrains Mono',monospace">${inv.id}</span>
+          <span style="font-size:12px;color:${T.tp}">${inv.vendor}</span>
+          <span style="font-size:12px;color:${T.tp};font-family:'JetBrains Mono',monospace">$${inv.amount.toLocaleString()}</span>
+          <div>${chip(s.c,s.l)}<div style="font-size:10px;color:${T.ts};margin-top:3px">${inv.due}</div></div>
+          ${confBar(inv.match,mc)}
+          <div style="display:flex;gap:5px">
+            ${inv.status==='flagged'
+              ?`<button class="btn-sm" style="background:${T.green}22;color:${T.green};border-color:${T.green}44">Approve</button><button class="btn-sm" style="background:${T.red}22;color:${T.red};border-color:${T.red}44">Reject</button>`
+              :`<button class="btn-sm" style="background:${T.blue}22;color:${T.blue};border-color:${T.blue}44">View</button>`}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+// ── Forecasting ───────────────────────────────────────────────────────────────
+function calcForecast() {
+  const base=43.5, hc=hires*14.5, oc=officeExp*8, mk=mktBudget*5, sv=delayM*hc*.3;
+  const burn = base+hc+oc+mk-sv;
+  const runway = Math.max(0, 921/burn);
+  const color = runway>8?T.green:runway>5?T.amber:T.red;
+  return {burn, runway, color, base};
+}
+
+function forecastView() {
+  const {burn,runway,color,base} = calcForecast();
+  const sliders = [
+    {label:'New Engineer Hires', val:hires, id:'hires', max:10, cost:`+$${(hires*14.5).toFixed(0)}K/mo`},
+    {label:'Hiring Delay (months)', val:delayM, id:'delay', max:6, cost:delayM>0?`-$${(delayM*hires*14.5*.3).toFixed(0)}K saved`:'No savings'},
+    {label:'Office Expansion', val:officeExp, id:'office', max:5, cost:`+$${(officeExp*8).toFixed(0)}K/mo`},
+    {label:'Marketing Increase', val:mktBudget, id:'mkt', max:5, cost:`+$${(mktBudget*5).toFixed(0)}K/mo`},
+  ];
+  return `<div class="view">
+    <div style="margin-bottom:18px">
+      <div style="font-size:20px;font-weight:600;color:${T.tp};letter-spacing:-.02em">Forecasting & Scenario Planning</div>
+      <div style="font-size:12px;color:${T.ts};margin-top:2px">Adjust parameters to model strategic decisions in real time</div>
+    </div>
+    <div class="grid-scenario">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:500;color:${T.tp};margin-bottom:18px">⚙ Scenario Controls</div>
+          ${sliders.map(s=>`<div style="margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <span style="font-size:12px;color:${T.ts}">${s.label}</span>
+              <span style="font-size:11px;color:${s.cost.startsWith('-')?T.green:T.amber};font-family:'JetBrains Mono',monospace">${s.cost}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" min="0" max="${s.max}" value="${s.val}" oninput="updateScenario('${s.id}',this.value)"/>
+              <span style="font-size:13px;color:${T.tp};font-family:'JetBrains Mono',monospace;min-width:20px;text-align:right">${s.val}</span>
+            </div>
+          </div>`).join('')}
+        </div>
+        <div class="card" style="border-color:${color}44">
+          <div style="font-size:11px;color:${T.ts};margin-bottom:6px">Projected Runway</div>
+          <div style="font-size:38px;font-weight:700;color:${color};font-family:'JetBrains Mono',monospace">${runway.toFixed(1)}<span style="font-size:15px;font-weight:400"> mo</span></div>
+          <div style="font-size:12px;color:${T.ts};margin-top:6px">New burn: ${mono('$'+burn.toFixed(1)+'K/mo')}</div>
+          <div style="margin-top:10px;padding:10px;background:${color}10;border-radius:8px;font-size:12px;color:${T.ts};line-height:1.6">
+            ${runway<6?'⚠ Below 6 months — consider staging hires or a bridge round.':runway<8?'Runway healthy. Monitor AR collections.':'Cash position looks strong.'}
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:500;color:${T.tp};margin-bottom:4px">Cash Runway Comparison</div>
+        <div style="font-size:11px;color:${T.ts};margin-bottom:16px">Base case vs. scenario · 13 weeks</div>
+        <div style="position:relative;height:295px"><canvas id="scenChart"></canvas></div>
+        <div style="margin-top:14px;padding:12px;background:${color}10;border:1px solid ${color}33;border-radius:8px">
+          <div style="font-size:11px;font-weight:500;color:${color};margin-bottom:4px">AI Analysis</div>
+          <div style="font-size:12px;color:${T.ts};line-height:1.6">
+            ${burn>base?`Burn increases by $${(burn-base).toFixed(1)}K/mo, reducing runway to ${runway.toFixed(1)} months.`:'Scenario improves cash position versus base case.'}
+            ${runway<5?' Seek additional capital immediately.':runway<7?' Monitor closely and maintain AR collections.':' Proceed with confidence.'}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Agents ────────────────────────────────────────────────────────────────────
+function agentsView() {
+  return `<div class="view">
+    <div style="margin-bottom:18px">
+      <div style="font-size:20px;font-weight:600;color:${T.tp};letter-spacing:-.02em">Agent Control Center</div>
+      <div style="font-size:12px;color:${T.ts};margin-top:2px">5 specialized agents · Real-time status · Progressive autonomy</div>
+    </div>
+    <div class="grid4" style="margin-bottom:18px">
+      ${[['Tasks Today','337',T.blue],['Avg Confidence','92.4%',T.green],['HITL Escalations','3',T.amber],['Auto-Executed','312',T.cyan]].map(([l,v,c])=>`
+        <div class="metric-card" style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:${T.ts}">${l}</span>
+          <span style="font-size:17px;font-weight:600;color:${c};font-family:'JetBrains Mono',monospace">${v}</span>
+        </div>`).join('')}
+    </div>
+    <div class="grid-agents">
+      ${AGENTS.map(ag=>{
+        const sc = ag.status==='active'?T.green:ag.status==='alert'?T.red:T.amber;
+        const mc = ag.conf>=90?T.green:ag.conf>=75?T.amber:T.red;
+        const open = SEL_AGENT===ag.id;
+        return `<div class="card" style="cursor:pointer;border-color:${open?T.blue:T.border};transition:border-color .15s" onclick="toggleAgent('${ag.id}')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:36px;height:36px;border-radius:10px;background:${T.blue}22;display:flex;align-items:center;justify-content:center;font-size:16px">🖥</div>
+              <div>
+                <div style="font-size:14px;font-weight:500;color:${T.tp}">${ag.name}</div>
+                <div style="font-size:11px;color:${T.ts};margin-top:1px">${ag.tasks} tasks today</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <span style="width:8px;height:8px;border-radius:50%;background:${sc};display:inline-block"></span>
+              <span style="font-size:10px;color:${sc};font-weight:500">${ag.status.toUpperCase()}</span>
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:${T.ts};margin-bottom:5px">
+              <span>Confidence</span><span style="font-family:'JetBrains Mono',monospace">${ag.conf}%</span>
+            </div>
+            ${confBar(ag.conf,mc)}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:10px;color:${T.tm};margin-bottom:4px;letter-spacing:.06em">AUTONOMY</div>
+              <div style="display:flex;gap:3px;align-items:center">
+                ${[1,2,3].map(l=>`<div style="width:20px;height:4px;border-radius:2px;background:${l<=ag.auto?AC[ag.auto]:T.border}"></div>`).join('')}
+                <span style="font-size:10px;color:${AC[ag.auto]};margin-left:6px;font-weight:500">${AL[ag.auto]}</span>
+              </div>
+            </div>
+            ${ag.status==='alert'?chip(T.red,'Action Required'):''}
+          </div>
+          ${open?`<div style="margin-top:14px;padding-top:14px;border-top:1px solid ${T.border}">
+            <div style="font-size:10px;color:${T.tm};margin-bottom:6px;letter-spacing:.06em">LATEST ACTIVITY</div>
+            <div style="font-size:12px;color:${T.ts};line-height:1.6">${ag.recent}</div>
+          </div>`:''}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+// ── Charts ────────────────────────────────────────────────────────────────────
+function initCharts() {
+  if (typeof Chart === 'undefined') return;
+  Object.values(charts).forEach(c=>{try{c.destroy()}catch(e){}});
+  charts = {};
+
+  if (VIEW==='dashboard') {
+    const rc = document.getElementById('runwayChart');
+    const bc = document.getElementById('burnChart');
+    const labels = ['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
+    if (rc) charts.runway = new Chart(rc, {type:'line', data:{labels, datasets:[
+      {label:'Actual',data:[1240,1198,1142,1082,1035,986,921,null,null,null,null,null],borderColor:T.blue,borderWidth:2,backgroundColor:T.blue+'18',fill:true,tension:.4,pointRadius:0,spanGaps:false},
+      {label:'Forecast',data:[1240,1198,1142,1082,1035,986,921,867,798,722,638,545],borderColor:T.cyan,borderWidth:1.5,borderDash:[5,4],fill:false,tension:.4,pointRadius:0},
+    ]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:T.card,borderColor:'#1E3050',borderWidth:1,callbacks:{label:x=>'$'+x.parsed.y+'K'}}},scales:{x:{grid:{color:T.border+'88'},ticks:{color:T.ts,font:{size:10}}},y:{grid:{color:T.border+'88'},ticks:{color:T.ts,font:{size:10},callback:v=>'$'+v+'K'},min:0}}}});
+    if (bc) charts.burn = new Chart(bc, {type:'bar', data:{labels:['Oct','Nov','Dec','Jan','Feb','Mar'], datasets:[{data:[38.2,39.8,42.1,44.3,43.8,45.2],backgroundColor:T.amber+'70',borderColor:T.amber,borderWidth:1,borderRadius:3}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:T.card,borderColor:'#1E3050',borderWidth:1,callbacks:{label:x=>'$'+x.parsed.y+'K'}}},scales:{x:{grid:{display:false},ticks:{color:T.ts,font:{size:10}}},y:{grid:{color:T.border+'88'},ticks:{color:T.ts,font:{size:10},callback:v=>'$'+v+'K'}}}}});
+  }
+
+  if (VIEW==='forecast') {
+    const sc = document.getElementById('scenChart');
+    if (sc) initScenChart(sc);
+  }
+}
+
+function initScenChart(canvas) {
+  if (charts.scen) { try{charts.scen.destroy()}catch(e){} }
+  const {burn, color, base} = calcForecast();
+  const lbs = Array.from({length:13},(_,i)=>'W'+(i+1));
+  charts.scen = new Chart(canvas, {type:'line', data:{labels:lbs, datasets:[
+    {label:'Base',data:lbs.map((_,i)=>Math.max(0,921-base*i/4)),borderColor:T.blue,borderWidth:2,backgroundColor:T.blue+'15',fill:true,tension:.4,pointRadius:0},
+    {label:'Scenario',data:lbs.map((_,i)=>Math.max(0,921-burn*i/4)),borderColor:color,borderWidth:2,borderDash:[5,4],fill:false,tension:.4,pointRadius:0},
+  ]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:T.card,borderColor:'#1E3050',borderWidth:1,callbacks:{label:x=>'$'+x.parsed.y.toFixed(0)+'K'}}},scales:{x:{grid:{color:T.border+'88'},ticks:{color:T.ts,font:{size:10}}},y:{grid:{color:T.border+'88'},ticks:{color:T.ts,font:{size:10},callback:v=>'$'+v+'K'},min:0}}}});
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  const views = {dashboard:dashView, chat:chatView, apar:aparView, forecast:forecastView, agents:agentsView};
+  document.getElementById('app').innerHTML = `${sidebar()}<div id="main">${(views[VIEW]||dashView)()}</div>`;
+  setTimeout(initCharts, 50);
+  if (VIEW==='chat') {
+    const msgs = document.getElementById('chat-msgs');
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  }
+}
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+function go(v) { VIEW=v; render(); }
+function setRole(r) { ROLE=r; render(); }
+function setAparTab(t) { APAR_TAB=t; render(); }
+function toggleAgent(id) { SEL_AGENT = SEL_AGENT===id?null:id; render(); }
+function updateScenario(id, val) {
+  val = parseInt(val);
+  if(id==='hires') hires=val;
+  else if(id==='delay') delayM=val;
+  else if(id==='office') officeExp=val;
+  else if(id==='mkt') mktBudget=val;
+  // Update the scenario view without full re-render
+  const sc = document.getElementById('scenChart');
+  if (sc) initScenChart(sc);
+  // Update cards
+  const {burn,runway,color,base} = calcForecast();
+  const rwyEl = document.querySelector('.rwy-val');
+  if (rwyEl) rwyEl.textContent = runway.toFixed(1);
+  // Re-render forecast view only
+  const main = document.getElementById('main');
+  if (main && VIEW==='forecast') { main.innerHTML = forecastView(); setTimeout(()=>{const sc2=document.getElementById('scenChart');if(sc2)initScenChart(sc2);},50); }
+}
+
+async function sendChat(text) {
+  if (chatLoading) return;
+  const inp = document.getElementById('chat-input');
+  const q = (text || (inp&&inp.value) || '').trim();
+  if (!q) return;
+  if (inp) inp.value = '';
+  chatMsgs.push({role:'user', text:q});
+  chatLoading = true;
+  render();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:SYS,messages:chatMsgs.filter(m=>m.role!=='ai'||chatMsgs.indexOf(m)>0).map(m=>({role:m.role==='ai'?'assistant':'user',content:m.text}))})
+    });
+    const d = await res.json();
+    chatMsgs.push({role:'ai', text: d.content?.[0]?.text||'Error retrieving response.'});
+  } catch(e) {
+    chatMsgs.push({role:'ai', text:'Connection error. Please try again.'});
+  }
+  chatLoading = false;
+  render();
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+render();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" onload="initCharts()"></script>
+</body>
+</html>
