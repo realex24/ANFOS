@@ -1,0 +1,43 @@
+
+<div style="padding: 2rem; text-align: center;">
+  <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px;">ANFOS v3 — Pure Vanilla JS</div>
+  <div style="font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 1.5rem;">No React · No Babel · No htm · Just works</div>
+  <button id="dlbtn" style="padding: 14px 36px; font-size: 15px; font-weight: 500; border-radius: 8px; border: none; background: #3B6FFF; color: #fff; cursor: pointer;">
+    ⬇ Download index.html
+  </button>
+  <div id="msg" style="margin-top: 1rem; font-size: 13px; color: var(--color-text-secondary);"></div>
+</div>
+<script>
+document.getElementById('dlbtn').onclick = async function() {
+  try {
+    const response = await fetch('https://realex24.github.io/ANFOS/');
+    // Build the file content directly
+    const btn = document.getElementById('dlbtn');
+    btn.textContent = 'Building file...';
+    btn.style.background = '#FFB020';
+
+    // Fetch the actual file from the outputs via a data approach
+    // Since we can't fetch local files, embed a trigger
+    const msg = document.getElementById('msg');
+    msg.innerHTML = '⚠ Use the code block in the chat to copy the file — click the copy button on the code block above this widget.';
+    btn.textContent = 'See instructions above ↑';
+    btn.style.background = '#5A7AB0';
+  } catch(e) {
+    document.getElementById('msg').textContent = 'See the code block above to copy the file content.';
+  }
+};
+
+// Actually just trigger download from the blob directly
+document.getElementById('dlbtn').onclick = function() {
+  const link = document.createElement('a');
+  link.href = 'https://realex24.github.io/ANFOS/index.html';
+  link.download = 'index.html';
+  link.target = '_blank';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  document.getElementById('msg').textContent = '✓ Check your downloads folder for index.html';
+  document.getElementById('dlbtn').style.background = '#00C67B';
+  document.getElementById('dlbtn').textContent = '✓ Done!';
+};
+</script>
